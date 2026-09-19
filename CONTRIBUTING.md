@@ -1,6 +1,6 @@
-# Contributing to Rakazo
+# Contributing to HIVE
 
-Thanks for helping improve Rakazo. Keep changes focused and testable.
+Thanks for helping improve HIVE. Keep changes focused and testable.
 
 ## Run locally
 

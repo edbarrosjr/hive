@@ -53,7 +53,7 @@ private data class RunRecord(
 
 private class ApiException(val status: Int) : IOException()
 
-class RakazoNotificationService : Service() {
+class HIVENotificationService : Service() {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private lateinit var manager: NotificationManager
   private var pollJob: Job? = null
@@ -376,12 +376,12 @@ class RakazoNotificationService : Service() {
     private var openThreadId: String? = null
 
     fun start(context: Context) {
-      val intent = Intent(context, RakazoNotificationService::class.java)
+      val intent = Intent(context, HIVENotificationService::class.java)
       context.startService(intent)
     }
 
     fun stop(context: Context) {
-      context.stopService(Intent(context, RakazoNotificationService::class.java))
+      context.stopService(Intent(context, HIVENotificationService::class.java))
     }
 
     fun setOpenThread(context: Context, botId: String?, threadId: String?) {
@@ -393,7 +393,7 @@ class RakazoNotificationService : Service() {
         context.getSystemService(NotificationManager::class.java).cancel(threadId.hashCode())
       }
       context.startService(
-        Intent(context, RakazoNotificationService::class.java).setAction(ACTION_THREAD_CHANGED),
+        Intent(context, HIVENotificationService::class.java).setAction(ACTION_THREAD_CHANGED),
       )
     }
 

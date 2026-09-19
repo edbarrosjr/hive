@@ -1,6 +1,6 @@
 {
   "name": "@rakazo/desktop",
-  "productName": "Rakazo",
+  "productName": "HIVE",
   "version": "0.1.6",
   "license": "Apache-2.0",
   "type": "module",
@@ -55,7 +55,7 @@
       "main": "dist/main.js"
     },
     "mac": {
-      "icon": "../../packages/ui-tokens/assets/Rakazo.icon",
+      "icon": "../../packages/ui-tokens/assets/HIVE.icon",
       "category": "public.app-category.productivity",
       "target": [
         "dmg",

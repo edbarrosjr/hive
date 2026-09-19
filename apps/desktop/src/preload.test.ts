@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
-import type { RakazoDesktop, RakazoSetup } from "@rakazo/contracts";
+import type { HIVEDesktop, HIVESetup } from "@rakazo/contracts";
 import { describe, expect, it, vi } from "vitest";
 
 function runPreload(file: string, ipc: { invoke?: unknown; on?: unknown; off?: unknown } = {}) {
@@ -28,7 +28,7 @@ describe("desktop preload bridge", () => {
     const { invoke, exposeInMainWorld } = runPreload("preload.cjs");
 
     expect(exposeInMainWorld).toHaveBeenCalledTimes(1);
-    const [globalName, bridge] = exposeInMainWorld.mock.calls[0] as [string, RakazoDesktop];
+    const [globalName, bridge] = exposeInMainWorld.mock.calls[0] as [string, HIVEDesktop];
     expect(globalName).toBe("rakazoDesktop");
     expect(bridge.platform).toBe("linux");
     expect(Object.keys(bridge).sort()).toEqual([
@@ -90,7 +90,7 @@ describe("desktop preload bridge", () => {
     const off = vi.fn();
     const { exposeInMainWorld } = runPreload("preload.cjs", { on, off });
 
-    const [, bridge] = exposeInMainWorld.mock.calls[0] as [string, RakazoDesktop];
+    const [, bridge] = exposeInMainWorld.mock.calls[0] as [string, HIVEDesktop];
     const received: unknown[] = [];
     const unsubscribe = bridge.oauth.onCallback((callback) => received.push(callback));
 
@@ -108,7 +108,7 @@ describe("setup preload bridge", () => {
     const { invoke, on, exposeInMainWorld } = runPreload("setup-preload.cjs");
 
     expect(exposeInMainWorld).toHaveBeenCalledTimes(1);
-    const [globalName, bridge] = exposeInMainWorld.mock.calls[0] as [string, RakazoSetup];
+    const [globalName, bridge] = exposeInMainWorld.mock.calls[0] as [string, HIVESetup];
     expect(globalName).toBe("rakazoSetup");
     expect(bridge.platform).toBe("linux");
     expect(Object.keys(bridge).sort()).toEqual([
