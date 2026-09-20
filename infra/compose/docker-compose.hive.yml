@@ -244,31 +244,36 @@ services:
   # deploy e pela API da Hostinger, que so publica o compose, o proxy entra
   # como servico do mesmo projeto.
   #
-  # As rotas abaixo copiam infra/compose/Caddyfile.prod, o arquivo que o
-  # proprio projeto usa em producao: /health, /api/* e /rpc/* vao DIRETO
-  # para a api, e so o resto vai para a tela. Mandar tudo para a tela e
-  # deixar o servidor de preview repassar quebra o login: o repasse do vite
-  # usa changeOrigin, que reescreve o Host do pedido, e esse caminho nunca
-  # e exercitado em producao pelo upstream.
+  # ROTAS: copiam infra/compose/Caddyfile.prod, o arquivo que o proprio
+  # projeto usa em producao. /health, /api/* e /rpc/* vao DIRETO para a api;
+  # so o resto vai para a tela. Mandar tudo para a tela e deixar o servidor
+  # de preview repassar nao e o caminho que o upstream exercita.
   #
-  # O Caddy pega o certificado do Let's Encrypt sozinho, para o proprio
-  # hostname do VPS. As portas 80 e 443 precisam estar livres na maquina.
+  # PORTA: por padrao 8443, e nao 443, porque esta maquina ja tem outra
+  # coisa escutando em 80/443. Com as portas ocupadas o Caddy nao sobe e o
+  # HIVE fica inacessivel. Em 8443 nao da para tirar certificado do Let's
+  # Encrypt (o desafio exige 80 ou 443), entao `tls internal` emite um
+  # certificado proprio: o navegador avisa uma vez e depois entra.
+  #
+  # Para voltar a 80/443 quando a maquina estiver livre: HIVE_PORT=443,
+  # trocar `tls internal` por nada (o Caddy tira o certificado sozinho) e
+  # repor BETTER_AUTH_URL/WEB_ORIGIN/API_URL sem a porta.
   # ------------------------------------------------------------------
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
+      - "${HIVE_PORT:-8443}:${HIVE_PORT:-8443}"
     environment:
       HIVE_HOST: ${RAKAZO_HOST:?Defina RAKAZO_HOST com o hostname publico}
+      HIVE_PORT: ${HIVE_PORT:-8443}
     command:
       - sh
       - -c
       - |
         cat > /etc/caddy/Caddyfile <<CADDY
-        $$HIVE_HOST {
+        https://$$HIVE_HOST:$$HIVE_PORT {
+          tls internal
           encode zstd gzip
 
           handle /health {
