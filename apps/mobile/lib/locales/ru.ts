@@ -145,6 +145,8 @@ export const RU_MESSAGES: Record<string, string> = {
   Code: "Код",
   Color: "Цвет",
   "Color {number}": "Цвет {number}",
+  "Eye color": "Цвет глаз",
+  "Eye color {number}": "Цвет глаз {number}",
   Completed: "Завершено",
   Computer: "Компьютер",
   "Confirm password": "Подтвердите пароль",

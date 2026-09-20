@@ -133,6 +133,8 @@ export const ZH_MESSAGES: Record<string, string> = {
   Code: "验证码",
   Color: "颜色",
   "Color {number}": "颜色 {number}",
+  "Eye color": "眼睛颜色",
+  "Eye color {number}": "眼睛颜色 {number}",
   Completed: "已完成",
   Computer: "电脑",
   "Confirm password": "确认密码",
