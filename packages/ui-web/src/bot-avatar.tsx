@@ -1,46 +1,36 @@
-import type { GrokColorDef } from "@rakazo/core";
+import type { ClaveExpression, GrokColorDef } from "@rakazo/core";
 import {
   ACTIVE_RUN_STATUSES,
+  CLAVE_AVATAR_BODY_PATH,
+  CLAVE_AVATAR_VIEWBOX,
+  CLAVE_EYE,
+  claveEyesFrame,
   DEFAULT_GROK_BOT_COLOR,
   GROK_BOT_COLORS,
   GROK_COLOR_LIST,
   resolvePersonaColorDef,
-  SHIPPED_BOT_AVATAR_CENTER,
   SHIPPED_BOT_AVATAR_SHAPE_KEYS,
   SHIPPED_BOT_AVATAR_SHAPES,
-  SHIPPED_BOT_AVATAR_VIEWBOX,
-  shippedBotAvatarShapePath,
-  shippedHash,
 } from "@rakazo/core";
-import { memo, useId, useMemo } from "react";
+import { memo, useMemo } from "react";
 import { cn } from "./lib/utils.js";
 import "./styles.css";
 
-export type { GrokColorDef };
+export type { ClaveExpression, GrokColorDef };
 export { DEFAULT_GROK_BOT_COLOR, GROK_BOT_COLORS, GROK_COLOR_LIST, resolvePersonaColorDef };
 
+/** @deprecated Kept for compatibility with callers that still inspect legacy shapes. */
 export const GROK_SHAPES = SHIPPED_BOT_AVATAR_SHAPES;
+/** @deprecated Clave is now the only product mascot silhouette. */
 export const SHIPPED_SHAPE_KEYS = SHIPPED_BOT_AVATAR_SHAPE_KEYS;
-const VIEWBOX = SHIPPED_BOT_AVATAR_VIEWBOX;
-const CENTER = SHIPPED_BOT_AVATAR_CENTER;
+export const GROK_MASCOT_SHAPES = SHIPPED_SHAPE_KEYS.map(() => CLAVE_AVATAR_BODY_PATH);
 
-export const GROK_MASCOT_SHAPES = SHIPPED_SHAPE_KEYS.map(
-  (k) => GROK_SHAPES[k] ?? FALLBACK_SHAPE_PATH,
-);
-
-const FALLBACK_SHAPE_PATH = GROK_SHAPES.hex ?? "";
-
-export function resolvePersonaShape(identity: string, explicitShape?: string | null): string {
-  if (explicitShape) {
-    const explicit = GROK_SHAPES[explicitShape];
-    if (explicit) return explicit;
-  }
-  let hash = shippedHash(identity);
-  hash = Math.imul(hash ^ (hash >>> 16), 73244475);
-  hash = Math.imul(hash ^ (hash >>> 13), 3266489909);
-  const shapeIndex = ((hash ^ (hash >>> 16)) >>> 0) % SHIPPED_SHAPE_KEYS.length;
-  const key = SHIPPED_SHAPE_KEYS[shapeIndex] ?? "hex";
-  return GROK_SHAPES[key] ?? FALLBACK_SHAPE_PATH;
+/**
+ * The identity and explicit legacy shape no longer change the product mascot.
+ * Keeping this function stable avoids a data migration for existing bots.
+ */
+export function resolvePersonaShape(_identity: string, _explicitShape?: string | null): string {
+  return CLAVE_AVATAR_BODY_PATH;
 }
 
 export function parseBotAvatar(
@@ -77,8 +67,58 @@ export interface BotAvatarProps {
   size?: number;
   status?: string;
   identity?: string;
+  expression?: ClaveExpression;
   className?: string;
   variant?: unknown;
+}
+
+function eyeTransform(side: "left" | "right", expression: ClaveExpression): string {
+  const frame = claveEyesFrame(expression);
+  const isLeft = side === "left";
+  const x = isLeft ? CLAVE_EYE.leftX : CLAVE_EYE.rightX;
+  const offsetX = isLeft ? frame.leftX : frame.rightX;
+  const offsetY = isLeft ? frame.leftY : frame.rightY;
+  const rotation = isLeft ? frame.leftRotation : frame.rightRotation;
+  const centerX = x + CLAVE_EYE.width / 2;
+  const centerY = CLAVE_EYE.y + CLAVE_EYE.height / 2;
+  return [
+    `translate(${offsetX} ${offsetY})`,
+    `translate(${centerX} ${centerY})`,
+    `rotate(${rotation})`,
+    `scale(${frame.scaleX} ${frame.scaleY})`,
+    `translate(${-centerX} ${-centerY})`,
+  ].join(" ");
+}
+
+function ClaveEyes({ expression, eyeColor }: { expression: ClaveExpression; eyeColor: string }) {
+  return (
+    <g className="clave-avatar-eyes" fill={eyeColor} data-expression={expression}>
+      <g
+        className="clave-avatar-eye clave-avatar-eye-left"
+        transform={eyeTransform("left", expression)}
+      >
+        <rect
+          x={CLAVE_EYE.leftX}
+          y={CLAVE_EYE.y}
+          width={CLAVE_EYE.width}
+          height={CLAVE_EYE.height}
+          rx={CLAVE_EYE.radius}
+        />
+      </g>
+      <g
+        className="clave-avatar-eye clave-avatar-eye-right"
+        transform={eyeTransform("right", expression)}
+      >
+        <rect
+          x={CLAVE_EYE.rightX}
+          y={CLAVE_EYE.y}
+          width={CLAVE_EYE.width}
+          height={CLAVE_EYE.height}
+          rx={CLAVE_EYE.radius}
+        />
+      </g>
+    </g>
+  );
 }
 
 export const BotAvatar = memo(function BotAvatar({
@@ -86,25 +126,17 @@ export const BotAvatar = memo(function BotAvatar({
   size = 36,
   status,
   identity = "",
+  expression,
   className,
 }: BotAvatarProps) {
-  const id = useId().replace(/[^a-zA-Z0-9-_]/g, "");
-  const isWorking = ACTIVE_RUN_STATUSES.some((s) => s === status);
-
+  const isWorking = ACTIVE_RUN_STATUSES.some((activeStatus) => activeStatus === status);
+  const resolvedExpression = expression ?? (isWorking ? "working" : "neutral");
   const parsed = useMemo(() => parseBotAvatar(color, identity), [color, identity]);
   const effectiveId = identity || parsed.color || "agent";
-
   const colorDef = useMemo(
     () => resolvePersonaColorDef(effectiveId, parsed.color),
     [effectiveId, parsed.color],
   );
-
-  const shapePath = useMemo(() => {
-    if (parsed.shapeIndex !== undefined) {
-      return shippedBotAvatarShapePath(parsed.shapeIndex);
-    }
-    return resolvePersonaShape(effectiveId);
-  }, [parsed.shapeIndex, effectiveId]);
 
   if (parsed.isImage && parsed.imageUrl) {
     return (
@@ -114,37 +146,8 @@ export const BotAvatar = memo(function BotAvatar({
           className,
         )}
         data-working={isWorking}
-        style={{
-          width: size,
-          height: size,
-          boxShadow: isWorking
-            ? "0 0 0 2px #3B82F6, 0 0 10px rgba(59,130,246,0.6)"
-            : "0 2px 5px rgba(0,0,0,0.5)",
-        }}
+        style={{ width: size, height: size }}
       >
-        {isWorking ? (
-          <svg
-            className="rakazo-bot-avatar-ring absolute pointer-events-none"
-            style={{
-              inset: -4,
-              width: size + 8,
-              height: size + 8,
-            }}
-            viewBox="0 0 48 48"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle
-              cx="24"
-              cy="24"
-              r="22"
-              stroke="#3B82F6"
-              strokeWidth="3.2"
-              strokeLinecap="round"
-              strokeDasharray="45 80"
-            />
-          </svg>
-        ) : null}
         <img src={parsed.imageUrl} alt="" className="h-full w-full object-cover" />
       </div>
     );
@@ -153,82 +156,30 @@ export const BotAvatar = memo(function BotAvatar({
   return (
     <div
       className={cn(
-        "rakazo-bot-avatar grok-avatar-container relative inline-flex items-center justify-center shrink-0 select-none",
+        "rakazo-bot-avatar clave-avatar relative inline-flex items-center justify-center shrink-0 select-none",
         className,
       )}
-      style={{
-        width: size,
-        height: size,
-      }}
+      style={{ width: size, height: size }}
+      data-expression={resolvedExpression}
+      data-mascot="clave"
       data-working={isWorking}
     >
       <svg
-        className="rakazo-bot-avatar-ring absolute pointer-events-none"
-        style={{
-          inset: -4,
-          width: size + 8,
-          height: size + 8,
-          filter: `drop-shadow(0 0 6px ${colorDef.light}) drop-shadow(0 0 10px #ffffff)`,
-        }}
-        viewBox="0 0 48 48"
-        fill="none"
-        aria-hidden="true"
-      >
-        <circle
-          cx="24"
-          cy="24"
-          r="22"
-          stroke={`url(#${id}-ring)`}
-          strokeWidth="3.2"
-          strokeLinecap="round"
-          strokeDasharray="45 80"
-        />
-        <circle cx="43" cy="24" r="2.8" fill="#ffffff" />
-        <defs>
-          <linearGradient id={`${id}-ring`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-            <stop offset="60%" stopColor={colorDef.light} stopOpacity="0.9" />
-            <stop offset="100%" stopColor={colorDef.light} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <svg
-        viewBox={VIEWBOX}
+        viewBox={CLAVE_AVATAR_VIEWBOX}
         width={size}
         height={size}
         aria-hidden="true"
-        className={cn(
-          "overflow-visible transition-transform duration-300",
-          isWorking
-            ? "animate-pulse scale-[1.04] motion-reduce:animate-none"
-            : "hover:scale-[1.03] motion-reduce:hover:scale-100",
-        )}
-        style={{
-          filter: isWorking
-            ? `drop-shadow(0 0 8px ${colorDef.light}) drop-shadow(0 0 2px #ffffff)`
-            : "drop-shadow(0 2px 4px rgba(0,0,0,0.45))",
-        }}
+        className="block overflow-visible"
       >
-        <defs>
-          <linearGradient id={`grok-ink-${id}`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor={colorDef.light} />
-            <stop offset="100%" stopColor={colorDef.dark} />
-          </linearGradient>
-        </defs>
-        <g>
-          <path d={shapePath} fill={`url(#grok-ink-${id})`} />
-          <g fill={colorDef.eyeColor} className="grok-character-eyes">
-            <ellipse cx={CENTER - 29} cy={CENTER - 8} rx={10} ry={7} />
-            <ellipse cx={CENTER + 29} cy={CENTER - 8} rx={10} ry={7} />
-          </g>
-        </g>
+        <path className="clave-avatar-body" d={CLAVE_AVATAR_BODY_PATH} fill={colorDef.hex} />
+        <ClaveEyes expression={resolvedExpression} eyeColor={colorDef.eyeColor} />
       </svg>
     </div>
   );
 });
 
+/** @deprecated The Avatar Studio now exposes color only. */
 export function GrokShapePreview({
-  shapeIndex,
   color,
   selected,
   onClick,
@@ -238,15 +189,12 @@ export function GrokShapePreview({
   selected?: boolean;
   onClick?: () => void;
 }) {
-  const key = SHIPPED_SHAPE_KEYS[shapeIndex % SHIPPED_SHAPE_KEYS.length] ?? "hex";
-  const path = shippedBotAvatarShapePath(shapeIndex);
   const colorDef = resolvePersonaColorDef("preview", color);
-
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={key}
+      aria-label="clave"
       aria-pressed={selected ?? false}
       className={cn(
         "relative flex size-11 items-center justify-center rounded-xl transition-transform hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-popover",
@@ -255,12 +203,9 @@ export function GrokShapePreview({
           : "hover:bg-white/5",
       )}
     >
-      <svg viewBox={VIEWBOX} className="size-8 overflow-visible" aria-hidden="true">
-        <path d={path} fill={colorDef.light} />
-        <g fill={colorDef.eyeColor}>
-          <ellipse cx={CENTER - 29} cy={CENTER - 8} rx={10} ry={7} />
-          <ellipse cx={CENTER + 29} cy={CENTER - 8} rx={10} ry={7} />
-        </g>
+      <svg viewBox={CLAVE_AVATAR_VIEWBOX} className="size-8 overflow-visible" aria-hidden="true">
+        <path d={CLAVE_AVATAR_BODY_PATH} fill={colorDef.hex} />
+        <ClaveEyes expression="neutral" eyeColor={colorDef.eyeColor} />
       </svg>
     </button>
   );

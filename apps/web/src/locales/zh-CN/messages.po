@@ -743,8 +743,8 @@ msgid "Checkout has local changes. Clean it before updating."
 msgstr "工作副本有本地更改。请先清理再更新。"
 
 #: src/pages/shell/avatar-studio-popover.tsx:136
-msgid "Choose a bot shape, color, or upload an image"
-msgstr "选择机器人形状和颜色，或上传图片"
+msgid "Choose a bot color"
+msgstr "选择机器人颜色"
 
 #: src/pages/MessagingSettingsOverlay.tsx:158
 msgid "Choose a bot…"

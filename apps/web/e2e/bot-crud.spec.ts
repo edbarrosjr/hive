@@ -76,7 +76,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   await page.getByTestId("avatar-studio-trigger").click();
   const studio = page.getByTestId("avatar-studio");
   await expect(studio).toBeVisible();
-  await expect(studio.getByTestId("avatar-studio-bot-tab")).toBeVisible();
+  await expect(studio.getByTestId("avatar-studio-color")).toBeVisible();
   await studio.getByRole("button", { name: "Color #EAB308" }).click();
   await studio.getByRole("button", { name: "Done", exact: true }).click();
   await expect(studio).toBeHidden();

@@ -64,6 +64,32 @@
   }
 }
 
+@keyframes clave-eyes-working {
+  0%,
+  100% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  55% {
+    transform: translateX(4px);
+  }
+}
+
+.clave-avatar-body {
+  transform: none;
+}
+
+.clave-avatar-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.clave-avatar[data-expression="working"] .clave-avatar-eyes {
+  animation: clave-eyes-working 1.8s ease-in-out infinite;
+}
+
 .rakazo-bot-avatar-ring {
   animation: rakazo-avatar-spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   opacity: 0;
@@ -516,7 +542,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rakazo-bot-avatar-ring,
-  .rakazo-bot-avatar-eyes {
+  .rakazo-bot-avatar-eyes,
+  .clave-avatar-eyes {
     animation: none;
     transition: none;
   }

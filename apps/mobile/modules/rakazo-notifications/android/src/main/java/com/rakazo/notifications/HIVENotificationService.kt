@@ -33,9 +33,6 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 
 private data class RunRecord(
   val runId: String,
@@ -93,7 +90,6 @@ class HIVENotificationService : Service() {
   }
 
   private suspend fun poll(generation: Long) {
-    var selectedAvatarStyle: String? = null
     while (scope.isActive) {
       val storage = NotificationStorage(this)
       val settings = storage.settings
@@ -109,9 +105,6 @@ class HIVENotificationService : Service() {
       }
       val seeded = prepareHistorySpace(generation, storage.spaceId) ?: return
       try {
-        val avatarStyle = selectedAvatarStyle
-          ?: avatarStyle(storage.endpoint, storage.token, storage.spaceId)
-            .also { selectedAvatarStyle = it }
         val active = runs(storage.endpoint, storage.token, storage.spaceId, "active")
         val working = active.filter(::isWorking).filter { it.notificationsEnabled }
         val recent = runs(storage.endpoint, storage.token, storage.spaceId, "recent")
@@ -119,7 +112,7 @@ class HIVENotificationService : Service() {
         val immediate = mutableListOf<Pair<RunRecord, NotificationCopy>>()
         if (!runIfCurrent(generation) {
             val visibleWorking = working.filterNot(::isOpenThread)
-            if (visibleWorking.isEmpty()) clearLive() else showLive(visibleWorking, avatarStyle)
+            if (visibleWorking.isEmpty()) clearLive() else showLive(visibleWorking)
             if (!seeded) {
               knownCompleted += recent.map { it.runId }
             } else {
@@ -242,7 +235,7 @@ class HIVENotificationService : Service() {
     manager.notify(run.threadId.hashCode(), notification)
   }
 
-  private fun showLive(active: List<RunRecord>, avatarStyle: String) {
+  private fun showLive(active: List<RunRecord>) {
     val primary = active.first()
     val title = when (active.size) {
       1 -> "${primary.botName} is working"
@@ -254,7 +247,7 @@ class HIVENotificationService : Service() {
     }
     val liveBuilder = builder(Channels.LIVE)
       .setSmallIcon(
-        liveStatusIcon(primary, avatarStyle),
+        liveStatusIcon(),
       )
       .setContentTitle(title)
       .setContentText(body)
@@ -279,30 +272,39 @@ class HIVENotificationService : Service() {
     }
   }
 
-  private fun liveStatusIcon(run: RunRecord, avatarStyle: String): Icon {
-    if (avatarStyle != "organic") {
-      return Icon.createWithResource(this, R.drawable.ic_rakazo_notification)
-    }
+  private fun liveStatusIcon(): Icon {
     val bitmap = Bitmap.createBitmap(96, 96, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
-    val seed = run.botId.fold(0) { hash, character -> hash * 31 + character.code }
-    val phase = (seed and 0xff) / 255.0 * PI * 2
-    val lobes = 5 + (seed and 3)
-    val path = Path()
-    repeat(32) { index ->
-      val angle = index / 32.0 * PI * 2
-      val radius = 34 + sin(angle * lobes + phase) * 4 + cos(angle * 3 - phase) * 2
-      val x = (48 + cos(angle) * radius).toFloat()
-      val y = (48 + sin(angle) * radius).toFloat()
-      if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+    val body = Path().apply {
+      moveTo(24f, 12f)
+      lineTo(67.5f, 12f)
+      cubicTo(75.75f, 12f, 81f, 17.25f, 81f, 25.5f)
+      lineTo(81f, 30f)
+      cubicTo(73.5f, 30f, 69f, 34.13f, 69f, 39.75f)
+      cubicTo(69f, 45.38f, 73.5f, 49.5f, 81f, 49.5f)
+      lineTo(81f, 55.5f)
+      cubicTo(73.5f, 55.5f, 69f, 59.63f, 69f, 65.25f)
+      cubicTo(69f, 70.88f, 73.5f, 75f, 81f, 75f)
+      lineTo(81f, 75.75f)
+      cubicTo(81f, 81f, 78f, 84f, 72.75f, 84f)
+      lineTo(24f, 84f)
+      cubicTo(16.5f, 84f, 12f, 79.5f, 12f, 72f)
+      lineTo(12f, 24f)
+      cubicTo(12f, 16.5f, 16.5f, 12f, 24f, 12f)
+      close()
     }
-    path.close()
-    canvas.drawPath(path, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE })
+    canvas.drawPath(body, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE })
     val eyes = Paint(Paint.ANTI_ALIAS_FLAG).apply {
       xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
     }
-    canvas.drawRoundRect(35f, 36f, 41f, 58f, 3f, 3f, eyes)
-    canvas.drawRoundRect(55f, 36f, 61f, 58f, 3f, 3f, eyes)
+    canvas.save()
+    canvas.rotate(-42f, 36.75f, 48.38f)
+    canvas.drawRoundRect(32.63f, 39f, 40.88f, 57.75f, 4.13f, 4.13f, eyes)
+    canvas.restore()
+    canvas.save()
+    canvas.rotate(-42f, 54f, 48.38f)
+    canvas.drawRoundRect(49.88f, 39f, 58.13f, 57.75f, 4.13f, 4.13f, eyes)
+    canvas.restore()
     return Icon.createWithBitmap(bitmap)
   }
 
@@ -452,9 +454,6 @@ private fun runs(endpoint: String, token: String, spaceId: String, filter: Strin
 
 private fun isWorking(run: RunRecord): Boolean =
   run.status == "queued" || run.status == "leased" || run.status == "running"
-
-private fun avatarStyle(endpoint: String, token: String, spaceId: String): String =
-  rpc(endpoint, token, spaceId, "me", JSONObject()).optString("avatarStyle", "robot")
 
 private fun latestReply(endpoint: String, token: String, spaceId: String, run: RunRecord): String? {
   val target = JSONObject().apply {

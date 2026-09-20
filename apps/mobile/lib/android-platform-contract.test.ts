@@ -45,8 +45,9 @@ describe("Android mobile platform contract", () => {
     const live = readFileSync(resolve(mobileRoot, "lib/live-notifications.ts"), "utf8");
     const thread = readFileSync(resolve(mobileRoot, "app/thread.tsx"), "utf8");
     expect(service).toContain("android.requestPromotedOngoing");
-    expect(service).toContain("liveStatusIcon(primary, avatarStyle)");
-    expect(service).toContain('rpc(endpoint, token, spaceId, "me"');
+    expect(service).toContain("liveStatusIcon()");
+    expect(service).toContain("val body = Path().apply");
+    expect(service).not.toContain('rpc(endpoint, token, spaceId, "me"');
     expect(service).not.toContain("showStarting");
     expect(service).not.toContain("catch (_: IOException) {\n        stop()");
     expect(service).toContain("Expo push owns background completion and attention delivery");
