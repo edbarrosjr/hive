@@ -97,9 +97,9 @@ test("create group from + and see two bots in one transcript", async ({ page }, 
   await expect(groupAvatar.locator(".rakazo-bot-avatar")).toHaveCount(2);
   const workingAvatar = groupAvatar.locator('[data-working="true"]');
   await expect(workingAvatar).toHaveCount(1);
-  await expect(workingAvatar.locator(".rakazo-bot-avatar-ring")).toHaveCSS(
+  await expect(workingAvatar.locator(".clave-avatar-eyes")).toHaveCSS(
     "animation-name",
-    "rakazo-avatar-spin",
+    "clave-eyes-working",
   );
   await captureScreenshot(page, testInfo, "group-avatar-active");
   await page.unroute("**/rpc/groups/list");

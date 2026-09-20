@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("bot avatar ring stays still when reduced motion is enabled", async ({ page }) => {
+test("bot avatar eyes stay still when reduced motion is enabled", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/e2e/fixtures/avatar-motion.html");
 
@@ -8,10 +8,10 @@ test("bot avatar ring stays still when reduced motion is enabled", async ({ page
   await expect(avatar).toBeVisible();
   await expect(avatar).toHaveAttribute("data-working", "true");
 
-  const ring = avatar.locator(".rakazo-bot-avatar-ring");
-  await expect(ring).toBeVisible();
+  const eyes = avatar.locator(".clave-avatar-eyes");
+  await expect(eyes).toBeVisible();
   const snapshot = () =>
-    ring.evaluate((el: SVGElement) => ({
+    eyes.evaluate((el: SVGElement) => ({
       animationName: getComputedStyle(el).animationName,
       transform: getComputedStyle(el).transform,
     }));
