@@ -743,8 +743,8 @@ msgid "Checkout has local changes. Clean it before updating."
 msgstr "В checkout есть локальные изменения. Очистите его перед обновлением."
 
 #: src/pages/shell/avatar-studio-popover.tsx:136
-msgid "Choose a bot shape, color, or upload an image"
-msgstr "Выберите форму и цвет бота или загрузите изображение"
+msgid "Choose a bot color"
+msgstr "Выберите цвет бота"
 
 #: src/pages/MessagingSettingsOverlay.tsx:158
 msgid "Choose a bot…"

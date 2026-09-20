@@ -1,4 +1,4 @@
-import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
+import { ACTIVE_RUN_STATUSES, CLAVE_AVATAR_BODY_PATH } from "@rakazo/core";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
@@ -12,27 +12,24 @@ import {
 } from "./bot-avatar.js";
 
 describe("BotAvatar", () => {
-  it("renders distinct SVG gradient IDs for concurrent working avatars", () => {
+  it("renders the flat Clave mascot without gradients or shadows", () => {
     const html = renderToString(
       <div>
         <BotAvatar color="#8B5CF6" status="running" />
         <BotAvatar color="#10B981" status="running" />
       </div>,
     );
-
-    const gradMatches = [...html.matchAll(/id="([^"]+)"/g)].map((m) => m[1]);
-    expect(gradMatches).toHaveLength(4);
-    expect(new Set(gradMatches).size).toBe(4);
-    for (const id of gradMatches) {
-      expect(id).toBeTruthy();
-      expect(html).toContain(`url(#${id})`);
-    }
+    expect(html.match(/data-mascot="clave"/g)).toHaveLength(2);
+    expect(html).toContain(CLAVE_AVATAR_BODY_PATH);
+    expect(html).not.toContain("linearGradient");
+    expect(html).not.toContain("drop-shadow");
   });
 
   it.each([...ACTIVE_RUN_STATUSES])("marks active run status %s as working", (status) => {
     const html = renderToString(<BotAvatar color="#3B82F6" status={status} />);
     expect(html).toContain("<svg");
     expect(html).toContain('data-working="true"');
+    expect(html).toContain('data-expression="working"');
   });
 
   it("keeps working attribute false when idle", () => {
@@ -46,14 +43,16 @@ describe("BotAvatar", () => {
     );
     expect(html).toContain("<svg");
     expect(html).toContain("<path");
-    expect(html).toContain("<ellipse");
+    expect(html).toContain("<rect");
     expect(html).toContain('data-working="true"');
   });
 
-  it("renders distinct shapes for distinct bot identities", () => {
+  it("keeps one silhouette for distinct bot identities", () => {
     const maya = renderToString(<BotAvatar color="#D9508A" identity="maya" />);
     const github = renderToString(<BotAvatar color="#D9508A" identity="github" />);
-    expect(maya).not.toEqual(github);
+    expect(maya).toEqual(github);
+    expect(resolvePersonaShape("maya")).toBe(CLAVE_AVATAR_BODY_PATH);
+    expect(resolvePersonaShape("github")).toBe(CLAVE_AVATAR_BODY_PATH);
   });
 
   it("parses shape indexes from encoded color values", () => {
@@ -77,7 +76,7 @@ describe("BotAvatar", () => {
   it("resolves explicit colors and shapes", () => {
     expect(resolvePersonaColorDef("bot", "#10B981").hex.toLowerCase()).toBe("#10b981");
     expect(resolvePersonaColorDef("bot", "#fff").hex).toBe("#fff");
-    expect(resolvePersonaShape("bot", "hex")).toContain("M");
+    expect(resolvePersonaShape("bot", "hex")).toBe(CLAVE_AVATAR_BODY_PATH);
     expect(GROK_BOT_COLORS.length).toBeGreaterThan(0);
   });
 
@@ -106,19 +105,27 @@ describe("BotAvatar", () => {
     expect(html).not.toContain("evil.example");
   });
 
-  it("honors reduced-motion for the working mascot pulse class", () => {
+  it("moves working state to the eyes and keeps the body static", () => {
     const html = renderToString(
       <BotAvatar color="#8B5CF6" identity="maya" size={32} status="running" />,
     );
-    expect(html).toContain("animate-pulse");
-    expect(html).toContain("motion-reduce:animate-none");
+    expect(html).toContain('class="clave-avatar-body"');
+    expect(html).toContain('class="clave-avatar-eyes"');
+    expect(html).not.toContain("animate-pulse");
   });
 
-  it("exposes shape picker name and pressed state", () => {
+  it("supports explicit eye-only expressions", () => {
+    const html = renderToString(<BotAvatar color="#8B5CF6" expression="thinking" status="idle" />);
+    expect(html).toContain('data-expression="thinking"');
+    expect(html).toContain("clave-avatar-eye-left");
+    expect(html).toContain("clave-avatar-eye-right");
+  });
+
+  it("keeps the legacy preview API on the Clave silhouette", () => {
     const html = renderToString(
       <GrokShapePreview shapeIndex={0} color="#8B5CF6" selected onClick={() => undefined} />,
     );
-    expect(html).toContain('aria-label="hex"');
+    expect(html).toContain('aria-label="clave"');
     expect(html).toContain('aria-pressed="true"');
     expect(html).toContain("focus-visible:ring-2");
   });

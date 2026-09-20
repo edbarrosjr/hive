@@ -743,8 +743,8 @@ msgid "Checkout has local changes. Clean it before updating."
 msgstr ""
 
 #: src/pages/shell/avatar-studio-popover.tsx:136
-msgid "Choose a bot shape, color, or upload an image"
-msgstr "Bir bot şekli ve rengi seçin veya görüntü yükleyin"
+msgid "Choose a bot color"
+msgstr "Bir bot rengi seçin"
 
 #: src/pages/MessagingSettingsOverlay.tsx:158
 msgid "Choose a bot…"
