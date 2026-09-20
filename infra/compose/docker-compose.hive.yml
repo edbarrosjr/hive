@@ -298,17 +298,33 @@ services:
       - sh
       - -c
       - |
+        # Um bloco por linha, nunca `handle X { ... }` na mesma linha: no
+        # Caddyfile a chave de abertura tem de ser o fim da linha. Em uma
+        # linha so o arquivo nao compila, o processo morre e o contendor
+        # entra em loop de reinicio — sem porta de entrada para o HIVE.
         {
           echo "$$HIVE_ORIGIN {"
-          [ -n "$$HIVE_TLS" ] && echo "  tls $$HIVE_TLS"
-          echo "  encode zstd gzip"
-          echo "  handle /health { reverse_proxy api:3100 }"
-          echo "  handle /api/* { reverse_proxy api:3100 }"
-          echo "  handle /rpc/* { reverse_proxy api:3100 }"
-          echo "  handle { reverse_proxy web:5173 }"
+          [ -n "$$HIVE_TLS" ] && echo "	tls $$HIVE_TLS"
+          echo "	encode zstd gzip"
+          echo ""
+          for ROTA in "/health" "/api/*" "/rpc/*"; do  # aspas: sem expansao de curinga
+            echo "	handle $$ROTA {"
+            echo "		reverse_proxy api:3100"
+            echo "	}"
+            echo ""
+          done
+          echo "	handle {"
+          echo "		reverse_proxy web:5173"
+          echo "	}"
           echo "}"
         } > /etc/caddy/Caddyfile
-        echo "--- Caddyfile ---"; cat /etc/caddy/Caddyfile; echo "-----------------"
+        echo "--- Caddyfile gerado ---"
+        cat /etc/caddy/Caddyfile
+        echo "--- validacao ---"
+        caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile || {
+          echo "CADDYFILE INVALIDO: veja o erro acima. O contendor vai parar."
+          exit 1
+        }
         exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
     volumes:
       - caddydata:/data
