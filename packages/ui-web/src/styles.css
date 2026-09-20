@@ -543,7 +543,7 @@
 @media (prefers-reduced-motion: reduce) {
   .rakazo-bot-avatar-ring,
   .rakazo-bot-avatar-eyes,
-  .clave-avatar-eyes {
+  .clave-avatar[data-expression="working"] .clave-avatar-eyes {
     animation: none;
     transition: none;
   }

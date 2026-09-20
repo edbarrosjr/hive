@@ -33,4 +33,15 @@ describe("organic working avatar CSS", () => {
       expect(workingDurationSecondsForFamily(css, family)).toBe(seconds);
     }
   });
+
+  it("stops Clave eye motion when reduced motion is requested", () => {
+    const css = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "styles.css"),
+      "utf8",
+    );
+    const reducedMotionRules = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"));
+    expect(reducedMotionRules).toContain(
+      '.clave-avatar[data-expression="working"] .clave-avatar-eyes',
+    );
+  });
 });
