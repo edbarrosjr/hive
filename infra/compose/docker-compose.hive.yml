@@ -239,14 +239,20 @@ services:
         condition: service_healthy
 
   # ------------------------------------------------------------------
-  # HTTPS. Não faz parte do projeto original: o compose de imagens deles
-  # escuta só em 127.0.0.1 e manda você pôr um proxy no host. Como aqui o
-  # deploy é pela API da Hostinger, que só publica o compose, o proxy entra
-  # como serviço do mesmo projeto.
+  # HTTPS. Nao faz parte do projeto original: o compose de imagens deles
+  # escuta so em 127.0.0.1 e manda voce por um proxy no host. Como aqui o
+  # deploy e pela API da Hostinger, que so publica o compose, o proxy entra
+  # como servico do mesmo projeto.
   #
-  # O Caddy pega o certificado do Let's Encrypt sozinho, para o próprio
-  # hostname do VPS. As portas 80 e 443 precisam estar livres na máquina —
-  # se algo já as ocupa, este contêiner não sobe (e só ele falha).
+  # As rotas abaixo copiam infra/compose/Caddyfile.prod, o arquivo que o
+  # proprio projeto usa em producao: /health, /api/* e /rpc/* vao DIRETO
+  # para a api, e so o resto vai para a tela. Mandar tudo para a tela e
+  # deixar o servidor de preview repassar quebra o login: o repasse do vite
+  # usa changeOrigin, que reescreve o Host do pedido, e esse caminho nunca
+  # e exercitado em producao pelo upstream.
+  #
+  # O Caddy pega o certificado do Let's Encrypt sozinho, para o proprio
+  # hostname do VPS. As portas 80 e 443 precisam estar livres na maquina.
   # ------------------------------------------------------------------
   caddy:
     image: caddy:2-alpine
@@ -254,13 +260,34 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "443:443/udp"
     environment:
       HIVE_HOST: ${RAKAZO_HOST:?Defina RAKAZO_HOST com o hostname publico}
     command:
       - sh
       - -c
       - |
-        printf '%s\n' "$$HIVE_HOST {" "  reverse_proxy web:5173" "}" > /etc/caddy/Caddyfile
+        cat > /etc/caddy/Caddyfile <<CADDY
+        $$HIVE_HOST {
+          encode zstd gzip
+
+          handle /health {
+            reverse_proxy api:3100
+          }
+
+          handle /api/* {
+            reverse_proxy api:3100
+          }
+
+          handle /rpc/* {
+            reverse_proxy api:3100
+          }
+
+          handle {
+            reverse_proxy web:5173
+          }
+        }
+        CADDY
         exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
     volumes:
       - caddydata:/data
