@@ -32,9 +32,17 @@ outputs, so a kind an older client does not know fails the whole page load, not
 one bubble. On the web the renderer chain ends in `return null`
 (`apps/web/src/pages/Shell.tsx:6178`); on mobile `blockText`
 (`apps/mobile/lib/api.ts:887`) reads only `text` and `state` and returns `""`
-otherwise. A new block kind must therefore carry a top-level `text` field and
-ship with a generic fallback on both surfaces, or shipping it strands every
-client that has not updated — including an installed mobile build.
+otherwise. A new block kind must therefore ship with a generic renderer on both
+surfaces, or shipping it strands every client that has not updated — including
+an installed mobile build.
+
+CopilotKit already has that renderer and it is worth copying in shape.
+`WildcardToolCallRender` registers under the name `*` and catches any tool with
+no renderer of its own, showing its name, a status pill and its payload. The
+rule is that nothing ever renders as nothing. HIVE's version should print what
+it can read from an unknown block rather than dump JSON at a user — but the
+principle is the same, and it pays off a debt that exists today, with or
+without this feature.
 
 **A new event *type* is more dangerous than a new block kind.** `ProductEventType`
 is a closed `z.enum` of 42 values validated by the SSE `eventIterator`; an unknown
@@ -70,10 +78,32 @@ Content from an external server enters as a string in a React text node and
 nothing else. Byte and row caps live in the contract, as `ChartBlock` already
 does.
 
-A top-level `text` field is **required**. It is what the agent transcript, voice
-(`packages/core/src/speech-text.ts:198`), search, list previews and any client
-that does not know `panel` will read. It is the reason the block can never
-render as nothing.
+**The text projection is derived, not authored.** Every non-visual consumer —
+the agent transcript, voice (`packages/core/src/speech-text.ts:198`), search and
+list previews — needs a flat string. Asking the producer to write one alongside
+the sections would create a second copy that drifts from the first. Instead one
+pure function in `packages/core` walks the section tree and prints its text
+leaves. One source of truth, no redundant authoring, and it cannot go stale
+against the data it summarises.
+
+CopilotKit reaches the same conclusion from the other end. Its channel renderers
+lower one tree into Slack, Teams and WhatsApp, and the default branch of each
+lowering **recurses into the children** of a node it does not understand
+(`channels-whatsapp/src/render/message.ts`). Nothing disappears because text is
+a leaf every surface can print. Structural recursion is the degradation
+strategy; a redundant summary field is not.
+
+**A panel has a lifecycle, not one terminal state.** A tool that takes eight
+seconds should not leave the thread blank for eight seconds. CopilotKit's
+renderer contract is a union discriminated by status — `inProgress` carries
+partial arguments, `executing` carries complete ones, `complete` adds the result
+(`react-core/src/v2/types/defineToolCallRenderer.ts`) — so a panel is on screen
+while the work happens.
+
+HIVE gets the same effect without a new mechanism: publish the panel pending
+when the call starts, then fill it on the result through the in-place rewrite
+that Phase 3 already builds. The pending state is a title and a spinner, not a
+skeleton pretending to know the shape of an answer that has not arrived.
 
 **Actions stay in `ask`.** `answerRunInput` (`packages/db/src/events.ts:576`)
 re-reads the message from the database and requires the answer to be among the
@@ -109,7 +139,7 @@ These are not part of the feature. They are defects the feature would inherit.
    `tool.annotations?.readOnlyHint`; `mcp-connector.ts` does not propagate it.
    Propagate it and honour it. Without this, every question costs an approval tap.
 2. **Unknown blocks must degrade.** Replace the `return null` at
-   `Shell.tsx:6178` with a render of the block's `text`, and give
+   `Shell.tsx:6178` with a generic renderer, and give
    `apps/mobile/lib/api.ts:887` the same default. This pays a debt that already
    exists: `choice`, `card`, `mcp_approval`, `skill_draft` and `connect` render
    nothing on mobile today.
@@ -133,8 +163,10 @@ prompt-only change may capture much of the value and reframe everything below.
 `packages/core/src/panel/` (pure, no React, no DOM — sibling of `plot/`). Web
 renderer in `apps/web/src/pages/shell/message-cards.tsx` on vendored
 `Card`/`Badge`/`Separator`. A real native renderer on mobile, viable precisely
-because three list-shaped sections need no canvas. Teach the five kind-lists that
-read blocks to use `text`. Do the degradation fixes above in the same change.
+because three list-shaped sections need no canvas. Point the five kind-lists that
+read blocks at the shared text projection. Do the degradation fixes above in the
+same change, and publish the panel pending on tool-call start so the lifecycle
+exists from the first version rather than being retrofitted.
 Produce the block from the MCP emulator (`third-party-connector-emulator.ts`) so
 conformance is deterministic and offline. **CI cannot verify the mobile renderer:
 `apps/mobile/e2e/` contains only a README.** Say so in the PR rather than implying
