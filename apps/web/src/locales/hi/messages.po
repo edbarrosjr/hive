@@ -3848,3 +3848,12 @@ msgstr "रंग {0}"
 
 msgid "Color {color}"
 msgstr "रंग {color}"
+
+msgid "Eye color"
+msgstr "Eye color"
+
+msgid "Choose an eye color"
+msgstr "Choose an eye color"
+
+msgid "Eye color {color}"
+msgstr "Eye color {color}"

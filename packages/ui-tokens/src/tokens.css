@@ -35,6 +35,8 @@
   --overlay: rgba(4, 4, 5, 0.72);
   --scrollbar: #1e2026;
   --scrollbar-hover: #2e313a;
+  --mascot-body: #f97316;
+  --mascot-eyes: #141414;
   --radius: 0.75rem;
 }
 
@@ -72,5 +74,7 @@
   --overlay: rgba(20, 20, 22, 0.45);
   --scrollbar: #c8c8c4;
   --scrollbar-hover: #a8a8a4;
+  --mascot-body: #f97316;
+  --mascot-eyes: #141414;
   --radius: 0.75rem;
 }

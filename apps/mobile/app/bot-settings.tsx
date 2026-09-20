@@ -1,5 +1,4 @@
 import {
-  BOT_COLORS,
   BOT_DESCRIPTION_MAX_LENGTH,
   BOT_NAME_MAX_LENGTH,
   BOT_TITLE_MAX_LENGTH,
@@ -7,6 +6,8 @@ import {
   normalizeCreateBotProfile,
   type ThinkingLevel,
 } from "@rakazo/contracts";
+import { encodeClaveAvatar, parseBotAvatarValue } from "@rakazo/core";
+import { darkTokens, mascotEyeColors } from "@rakazo/ui-tokens";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
@@ -50,7 +51,9 @@ export default function BotSettingsScreen() {
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [color, setColor] = useState<string>(BOT_COLORS[0]);
+  const [color, setColor] = useState<string>(encodeClaveAvatar(darkTokens.mascotEyes));
+  const avatar = parseBotAvatarValue(color);
+  const eyeColor = avatar.kind === "clave" ? avatar.eyeColor : darkTokens.mascotEyes;
   const [computerMode, setComputerMode] = useState<ComputerMode>("team");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [modelKey, setModelKey] = useState("");
@@ -349,7 +352,7 @@ export default function BotSettingsScreen() {
           }}
         />
         <Text style={{ color: tokens.mutedForeground, marginTop: 16, fontSize: 14 }}>
-          {t("Color")}
+          {t("Eye color")}
         </Text>
         <ScrollView
           horizontal
@@ -357,20 +360,20 @@ export default function BotSettingsScreen() {
           contentContainerStyle={{ gap: 10, marginTop: 8 }}
           accessibilityRole="radiogroup"
         >
-          {BOT_COLORS.map((option, index) => (
+          {mascotEyeColors.map((option, index) => (
             <Pressable
               key={option}
               accessibilityRole="radio"
-              accessibilityLabel={t("Color {number}", { number: index + 1 })}
-              accessibilityState={{ checked: color === option }}
-              onPress={() => setColor(option)}
+              accessibilityLabel={t("Eye color {number}", { number: index + 1 })}
+              accessibilityState={{ checked: eyeColor === option }}
+              onPress={() => setColor(encodeClaveAvatar(option))}
               style={{
                 width: 36,
                 height: 36,
                 borderRadius: 18,
                 backgroundColor: option,
                 borderWidth: 3,
-                borderColor: color === option ? tokens.foreground : "transparent",
+                borderColor: eyeColor === option ? tokens.foreground : "transparent",
               }}
             />
           ))}

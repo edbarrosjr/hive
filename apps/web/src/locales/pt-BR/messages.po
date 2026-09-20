@@ -3848,3 +3848,12 @@ msgstr "Cor {0}"
 
 msgid "Color {color}"
 msgstr "Cor {color}"
+
+msgid "Eye color"
+msgstr "Cor dos olhos"
+
+msgid "Choose an eye color"
+msgstr "Escolha a cor dos olhos"
+
+msgid "Eye color {color}"
+msgstr "Cor dos olhos {color}"

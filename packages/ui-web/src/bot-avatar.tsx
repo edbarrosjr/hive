@@ -5,14 +5,18 @@ import {
   CLAVE_AVATAR_VIEWBOX,
   CLAVE_EYE,
   claveEyesFrame,
+  claveMotion,
+  claveMotionTransform,
   DEFAULT_GROK_BOT_COLOR,
   GROK_BOT_COLORS,
   GROK_COLOR_LIST,
+  parseBotAvatarValue,
   resolvePersonaColorDef,
   SHIPPED_BOT_AVATAR_SHAPE_KEYS,
   SHIPPED_BOT_AVATAR_SHAPES,
 } from "@rakazo/core";
-import { memo, useMemo } from "react";
+import { darkTokens } from "@rakazo/ui-tokens";
+import { memo, useEffect, useRef } from "react";
 import { cn } from "./lib/utils.js";
 import "./styles.css";
 
@@ -70,6 +74,8 @@ export interface BotAvatarProps {
   expression?: ClaveExpression;
   className?: string;
   variant?: unknown;
+  /** Disable motion in lists while retaining run status semantics. */
+  animate?: boolean;
 }
 
 function eyeTransform(side: "left" | "right", expression: ClaveExpression): string {
@@ -125,36 +131,51 @@ export const BotAvatar = memo(function BotAvatar({
   color,
   size = 36,
   status,
-  identity = "",
   expression,
   className,
+  animate = true,
 }: BotAvatarProps) {
   const isWorking = ACTIVE_RUN_STATUSES.some((activeStatus) => activeStatus === status);
   const resolvedExpression = expression ?? (isWorking ? "working" : "neutral");
-  const parsed = useMemo(() => parseBotAvatar(color, identity), [color, identity]);
-  const effectiveId = identity || parsed.color || "agent";
-  const colorDef = useMemo(
-    () => resolvePersonaColorDef(effectiveId, parsed.color),
-    [effectiveId, parsed.color],
-  );
+  const parsed = parseBotAvatarValue(color);
+  const eyeColor = parsed.kind === "clave" ? parsed.eyeColor : darkTokens.mascotEyes;
+  const root = useRef<HTMLDivElement>(null);
 
-  if (parsed.isImage && parsed.imageUrl) {
-    return (
-      <div
-        className={cn(
-          "rakazo-bot-avatar relative overflow-hidden rounded-full flex items-center justify-center select-none bg-secondary shrink-0 border border-border",
-          className,
-        )}
-        data-working={isWorking}
-        style={{ width: size, height: size }}
-      >
-        <img src={parsed.imageUrl} alt="" className="h-full w-full object-cover" />
-      </div>
-    );
-  }
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let animations: Animation[] = [];
+    const sync = () => {
+      for (const animation of animations) animation.cancel();
+      animations = [];
+      const motion = claveMotion(resolvedExpression);
+      if (!animate || media.matches || !motion || !root.current) return;
+      for (const part of ["body", "left", "right"] as const) {
+        const selector = part === "body" ? ".clave-avatar-character" : `.clave-avatar-eye-${part}`;
+        const element = root.current.querySelector<SVGElement>(selector);
+        if (!element?.animate) continue;
+        animations.push(
+          element.animate(
+            motion.frames.map((frame) => ({
+              offset: frame.offset,
+              transform: claveMotionTransform(frame, part),
+              easing: "cubic-bezier(.4,0,.2,1)",
+            })),
+            { duration: motion.duration, iterations: motion.iterations },
+          ),
+        );
+      }
+    };
+    sync();
+    media.addEventListener("change", sync);
+    return () => {
+      media.removeEventListener("change", sync);
+      for (const animation of animations) animation.cancel();
+    };
+  }, [animate, resolvedExpression]);
 
   return (
     <div
+      ref={root}
       className={cn(
         "rakazo-bot-avatar clave-avatar relative inline-flex items-center justify-center shrink-0 select-none",
         className,
@@ -171,8 +192,14 @@ export const BotAvatar = memo(function BotAvatar({
         aria-hidden="true"
         className="block overflow-visible"
       >
-        <path className="clave-avatar-body" d={CLAVE_AVATAR_BODY_PATH} fill={colorDef.hex} />
-        <ClaveEyes expression={resolvedExpression} eyeColor={colorDef.eyeColor} />
+        <g className="clave-avatar-character">
+          <path
+            className="clave-avatar-body"
+            d={CLAVE_AVATAR_BODY_PATH}
+            fill={darkTokens.mascotBody}
+          />
+          <ClaveEyes expression={resolvedExpression} eyeColor={eyeColor} />
+        </g>
       </svg>
     </div>
   );
@@ -189,7 +216,6 @@ export function GrokShapePreview({
   selected?: boolean;
   onClick?: () => void;
 }) {
-  const colorDef = resolvePersonaColorDef("preview", color);
   return (
     <button
       type="button"
@@ -203,10 +229,7 @@ export function GrokShapePreview({
           : "hover:bg-white/5",
       )}
     >
-      <svg viewBox={CLAVE_AVATAR_VIEWBOX} className="size-8 overflow-visible" aria-hidden="true">
-        <path d={CLAVE_AVATAR_BODY_PATH} fill={colorDef.hex} />
-        <ClaveEyes expression="neutral" eyeColor={colorDef.eyeColor} />
-      </svg>
+      <BotAvatar color={color} size={32} animate={false} />
     </button>
   );
 }
@@ -214,10 +237,7 @@ export function GrokShapePreview({
 export function Wordmark({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <div className="flex h-11 w-11 items-center justify-center gap-1.5 rounded-full bg-card">
-        <span className="h-4 w-[7px] rounded-full bg-primary" />
-        <span className="h-4 w-[7px] rounded-full bg-primary" />
-      </div>
+      <BotAvatar color="" size={44} animate={false} />
       <span className="font-[Aeonik,ui-sans-serif] text-[28px] tracking-tight text-foreground">
         HIVE
       </span>

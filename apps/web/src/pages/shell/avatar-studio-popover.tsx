@@ -1,16 +1,15 @@
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
+import { encodeClaveAvatar, parseBotAvatarValue } from "@rakazo/core";
+import { darkTokens, mascotEyeColors } from "@rakazo/ui-tokens";
 import {
   BotAvatar,
-  DEFAULT_GROK_BOT_COLOR,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  GROK_BOT_COLORS,
-  parseBotAvatar,
 } from "@rakazo/ui-web";
 import { Check, Pencil, X } from "lucide-react";
 import { useState } from "react";
@@ -33,15 +32,15 @@ export function AvatarStudioPopover({
   disabled = false,
 }: AvatarStudioPopoverProps) {
   const [open, setOpen] = useState(false);
-  const parsed = parseBotAvatar(value, identity);
-  const currentColor = parsed.color || DEFAULT_GROK_BOT_COLOR;
+  const parsed = parseBotAvatarValue(value);
+  const currentColor = parsed.kind === "clave" ? parsed.eyeColor : darkTokens.mascotEyes;
 
   function selectColor(color: string) {
-    onChange(color);
+    onChange(encodeClaveAvatar(color));
   }
 
   function resetAvatar() {
-    onChange(DEFAULT_GROK_BOT_COLOR);
+    onChange(encodeClaveAvatar(darkTokens.mascotEyes));
   }
 
   return (
@@ -71,7 +70,7 @@ export function AvatarStudioPopover({
               <Trans>Avatar Studio</Trans>
             </DialogTitle>
             <DialogDescription className="sr-only">
-              <Trans>Choose a bot color</Trans>
+              <Trans>Choose an eye color</Trans>
             </DialogDescription>
             <button
               type="button"
@@ -84,13 +83,18 @@ export function AvatarStudioPopover({
           </DialogHeader>
 
           <div className="flex flex-col items-center justify-center py-2">
-            <BotAvatar color={currentColor} identity={identity} size={78} status={status} />
+            <BotAvatar
+              color={encodeClaveAvatar(currentColor)}
+              identity={identity}
+              size={78}
+              expression="thinking"
+            />
           </div>
 
           <div className="border-t border-border pt-3" data-testid="avatar-studio-color">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-                <Trans>Color</Trans>
+                <Trans>Eye color</Trans>
               </span>
               <button
                 type="button"
@@ -101,15 +105,14 @@ export function AvatarStudioPopover({
               </button>
             </div>
             <div className="grid grid-cols-6 place-items-center gap-2">
-              {GROK_BOT_COLORS.map((color) => {
-                const selected =
-                  currentColor.toLowerCase() === color.toLowerCase() && !parsed.isImage;
+              {mascotEyeColors.map((color) => {
+                const selected = currentColor.toLowerCase() === color.toLowerCase();
                 return (
                   <button
                     key={color}
                     type="button"
                     onClick={() => selectColor(color)}
-                    aria-label={t`Color ${color}`}
+                    aria-label={t`Eye color ${color}`}
                     aria-pressed={selected}
                     className={`size-6 rounded-full border transition-transform hover:scale-110 active:scale-95 focus-visible:ring-2 focus-visible:ring-ring ${
                       selected

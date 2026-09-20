@@ -46,9 +46,14 @@ describe("appearance preference", () => {
     expect(tokensForAppearance("dark")).toBe(darkTokens);
     expect(tokensForAppearance("light")).toBe(lightTokens);
     for (const key of Object.keys(darkTokens) as (keyof ColorTokens)[]) {
-      if (key === "destructiveForeground") continue;
+      if (key === "destructiveForeground" || key === "mascotBody" || key === "mascotEyes") continue;
       expect(darkTokens[key], key).not.toBe(lightTokens[key]);
     }
+  });
+
+  it("keeps Clave identity fixed across themes", () => {
+    expect(darkTokens.mascotBody).toBe(lightTokens.mascotBody);
+    expect(darkTokens.mascotEyes).toBe(lightTokens.mascotEyes);
   });
 
   it("keeps user message surfaces muted, not cream invert", () => {

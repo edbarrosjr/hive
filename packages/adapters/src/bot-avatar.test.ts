@@ -31,11 +31,11 @@ describe("bot avatar encoding", () => {
   it("resolves hex color writes", async () => {
     await expect(
       resolveUpdateBotAvatar({
-        color: "#8B5CF6::shape_2",
+        color: "#8B5CF6",
         sourceImageArtifactIds: [],
         loadArtifact: async () => null,
       }),
-    ).resolves.toEqual({ color: "#8B5CF6::shape_2" });
+    ).resolves.toEqual({ color: "clave::eyes_#8B5CF6" });
   });
 
   it("rejects remote URLs and missing attached images", async () => {
@@ -52,26 +52,28 @@ describe("bot avatar encoding", () => {
         sourceImageArtifactIds: [],
         loadArtifact: async () => null,
       }),
-    ).resolves.toEqual({ error: "No attached image on this message." });
+    ).resolves.toEqual({
+      error: "Clave has a fixed orange body. Only the eye color can be customized.",
+    });
   });
 
-  it("loads only the requested space image", async () => {
-    const loadArtifact = async (id: string) => (id === "img-2" ? new Uint8Array(PNG_1X1) : null);
+  it("refuses image changes without loading an artifact", async () => {
+    const loadArtifact = async (_id: string): Promise<Uint8Array | null> => {
+      throw new Error("must not load images");
+    };
     const fromId = await resolveUpdateBotAvatar({
       artifactId: "img-2",
       sourceImageArtifactIds: ["img-1", "img-2"],
       loadArtifact,
     });
-    expect("color" in fromId && fromId.color.startsWith("data:image/webp;base64,")).toBe(true);
+    expect(fromId).toHaveProperty("error");
 
     const fromLatest = await resolveUpdateBotAvatar({
       useAttachedImage: true,
       sourceImageArtifactIds: ["img-1", "img-2"],
       loadArtifact,
     });
-    expect("color" in fromLatest && fromLatest.color.startsWith("data:image/webp;base64,")).toBe(
-      true,
-    );
+    expect(fromLatest).toHaveProperty("error");
 
     await expect(
       resolveUpdateBotAvatar({
@@ -80,7 +82,7 @@ describe("bot avatar encoding", () => {
         loadArtifact,
       }),
     ).resolves.toEqual({
-      error: "Image is not in this space or is not an attached picture.",
+      error: "Clave has a fixed orange body. Only the eye color can be customized.",
     });
   });
 });

@@ -923,6 +923,7 @@ function BotRow({
       onLongPress={onLongPress}
       avatar={
         <BotAvatar
+          animate={false}
           color={bot.color || FALLBACK_COLOR}
           identity={bot.id}
           status={bot.status}

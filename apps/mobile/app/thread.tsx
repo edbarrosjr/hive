@@ -389,6 +389,23 @@ function Thread() {
   const notificationThreadId = snap?.threadId ?? currentBot?.threadId;
   activeThreadId.current = notificationThreadId;
   const currentBotStatus = snap ? snap.run?.status : currentBot?.status;
+  const previousMascotRun = useRef<{ id: string; status: string } | null>(null);
+  const [completedMascotRun, setCompletedMascotRun] = useState<string | null>(null);
+  useEffect(() => {
+    const next = snap?.run ?? null;
+    const previous = previousMascotRun.current;
+    previousMascotRun.current = next;
+    setCompletedMascotRun(null);
+    if (
+      next?.status !== "completed" ||
+      previous?.id !== next.id ||
+      !isWorkingStatus(previous.status)
+    )
+      return;
+    setCompletedMascotRun(next.id);
+    const timer = setTimeout(() => setCompletedMascotRun(null), 950);
+    return () => clearTimeout(timer);
+  }, [snap?.run?.id, snap?.run?.status, botId]);
   const hasLiveProgress = visibleMessages.some((message) => message.id.startsWith("progress:"));
   const workingGroupBots = useMemo(() => {
     if (!inGroup) return [];
@@ -540,6 +557,13 @@ function Thread() {
               identity={currentBot.id}
               size={34}
               status={currentBotStatus}
+              expression={
+                currentBotStatus === "running"
+                  ? "thinking"
+                  : completedMascotRun === snap?.run?.id
+                    ? "success"
+                    : undefined
+              }
               muted={!currentBot.notifyOnFinish}
             />
           ) : null}
@@ -585,6 +609,7 @@ function Thread() {
     botId,
     currentBot,
     currentBotStatus,
+    completedMascotRun,
     displayName,
     groupId,
     inGroup,
@@ -1578,6 +1603,13 @@ function Thread() {
           </ScrollView>
         ) : (
           <FlatList
+            ListEmptyComponent={
+              !working ? (
+                <View style={{ alignItems: "center", padding: 48, transform: [{ scaleY: -1 }] }}>
+                  <BotAvatar color={currentBot?.color ?? ""} size={96} animate={false} />
+                </View>
+              ) : null
+            }
             key={threadKey}
             ref={scroll}
             data={liveMessages}
@@ -2177,7 +2209,7 @@ function MentionOptionIcon({ mention }: { mention: ComposerMention }) {
         width: 16,
         height: 16,
         borderRadius: 4,
-        backgroundColor: mention.color ?? tokens.mutedForeground,
+        backgroundColor: tokens.mascotBody,
       }}
     />
   );
@@ -2224,7 +2256,7 @@ function MentionChipIcon({ mention }: { mention: ComposerMention }) {
         width: 14,
         height: 14,
         borderRadius: 4,
-        backgroundColor: mention.color ?? tokens.mutedForeground,
+        backgroundColor: tokens.mascotBody,
       }}
     />
   );

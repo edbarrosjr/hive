@@ -1,5 +1,9 @@
 import type { MessageBlock } from "@rakazo/contracts";
-import { BOT_AVATAR_VALUE_MAX_LENGTH, isBotAvatarValue } from "@rakazo/contracts";
+import {
+  BOT_AVATAR_VALUE_MAX_LENGTH,
+  encodeClaveAvatar,
+  parseBotAvatarValue,
+} from "@rakazo/contracts";
 
 export const BOT_AVATAR_ENCODE_SIZE = 256;
 
@@ -41,33 +45,27 @@ export async function resolveUpdateBotAvatar(input: {
   const useAttachedImage = input.useAttachedImage === true;
   const color = typeof input.color === "string" ? input.color.trim() : undefined;
 
-  const imageId =
-    artifactId ?? (useAttachedImage ? input.sourceImageArtifactIds.at(-1) : undefined);
-
-  if (imageId) {
-    const bytes = await input.loadArtifact(imageId);
-    if (!bytes) {
-      return { error: "Image is not in this space or is not an attached picture." };
-    }
-    try {
-      return { color: await encodeBotAvatarImage(bytes) };
-    } catch {
-      return { error: "Could not use that image as an avatar." };
-    }
-  }
-
-  if (useAttachedImage) {
-    return { error: "No attached image on this message." };
+  if (artifactId || useAttachedImage) {
+    return { error: "Clave has a fixed orange body. Only the eye color can be customized." };
   }
 
   if (color !== undefined) {
-    if (!isBotAvatarValue(color)) {
-      return {
-        error:
-          "color must be a hex value, an encoded shape like #8B5CF6::shape_3, or a data image.",
-      };
+    const parsed = parseBotAvatarValue(color);
+    if (parsed.kind === "clave") return { color: encodeClaveAvatar(parsed.eyeColor) };
+    if (parsed.kind === "color") {
+      const hex =
+        parsed.color.length === 4
+          ? `#${parsed.color
+              .slice(1)
+              .split("")
+              .map((c) => c + c)
+              .join("")}`
+          : parsed.color;
+      return { color: encodeClaveAvatar(hex) };
     }
-    return { color };
+    return {
+      error: "color must be a hex eye color or clave::eyes_#RRGGBB. The body is fixed orange.",
+    };
   }
 
   return { error: "missing" };

@@ -86,8 +86,14 @@
   transform-origin: center;
 }
 
-.clave-avatar[data-expression="working"] .clave-avatar-eyes {
-  animation: clave-eyes-working 1.8s ease-in-out infinite;
+.clave-avatar-character {
+  transform-box: view-box;
+  transform-origin: 128px 129px;
+}
+
+.clave-avatar-eye {
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
 .rakazo-bot-avatar-ring {
