@@ -113,11 +113,24 @@ services:
       - ALL
     pids_limit: 256
     mem_limit: 1536m
-    env_file:
-      - .env
+    # Sem env_file. A API da Hostinger entrega as variaveis do projeto para a
+    # interpolacao do compose, mas nao grava um arquivo .env ao lado dele —
+    # e `env_file: .env` faz o `docker compose up` falhar inteiro quando o
+    # arquivo nao existe, antes de criar qualquer contendor. Era isso que
+    # deixava o projeto com zero contendores. Os segredos entram um a um.
     environment:
       NODE_ENV: production
       API_HOST: "0.0.0.0"
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Defina BETTER_AUTH_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Defina ENCRYPTION_KEY}
+      SCREEN_PROXY_SECRET: ${SCREEN_PROXY_SECRET:?Defina SCREEN_PROXY_SECRET}
+      SIGNUPS_ENABLED: ${SIGNUPS_ENABLED:-true}
+      SIGNUP_ALLOWLIST: ${SIGNUP_ALLOWLIST:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Opcionais: tambem da para conectar o modelo pela tela, depois de entrar.
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       RAKAZO_DESKTOP_STACK_TOKEN: ${RAKAZO_DESKTOP_STACK_TOKEN:-}
       # As tres saem de HIVE_ORIGIN, nunca de variaveis separadas: o
       # better-auth compara a origem do navegador por igualdade literal de
@@ -178,11 +191,15 @@ services:
       - ALL
     pids_limit: 512
     mem_limit: 2g
-    env_file:
-      - .env
+    # Sem env_file, pelo mesmo motivo da api.
     environment:
       BETTER_AUTH_SECRET: ""
       NODE_ENV: production
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Defina ENCRYPTION_KEY}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       DATABASE_URL: postgres://${POSTGRES_USER:-rakazo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-rakazo}
       DATA_DIR: /data
       SANDBOX_PROVIDER: ${SANDBOX_PROVIDER:-docker}
