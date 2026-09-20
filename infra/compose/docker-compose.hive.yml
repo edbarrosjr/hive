@@ -147,6 +147,10 @@ services:
       CLOUD_AGENT_SPACE_ID: ${CLOUD_AGENT_SPACE_ID:-}
       CURSOR_API_KEY: ${CURSOR_API_KEY:-}
       SANDBOX_SUPERVISOR_URL: http://supervisor:7091
+      # Autentica a api contra o supervisor. Sem ele, com SANDBOX_PROVIDER
+      # docker, o produto conclui que nao ha computadores e a tela do
+      # computador do bot devolve "Computers are off".
+      SANDBOX_SUPERVISOR_TOKEN: ${SANDBOX_SUPERVISOR_TOKEN:?Defina SANDBOX_SUPERVISOR_TOKEN}
       WAKEUP_DRIVER: graphile
       AGENT_RUNTIME: pi
       # Optional egress proxy (Mainland / corporate). Empty = unset; either case works.
@@ -207,6 +211,8 @@ services:
       CLOUD_AGENT_SPACE_ID: ${CLOUD_AGENT_SPACE_ID:-}
       CURSOR_API_KEY: ${CURSOR_API_KEY:-}
       SANDBOX_SUPERVISOR_URL: http://supervisor:7091
+      # Mesmo motivo da api: o worker tambem fala com o supervisor.
+      SANDBOX_SUPERVISOR_TOKEN: ${SANDBOX_SUPERVISOR_TOKEN:?Defina SANDBOX_SUPERVISOR_TOKEN}
       SCREEN_PROXY_SECRET: ""
       WAKEUP_DRIVER: graphile
       AGENT_RUNTIME: pi
