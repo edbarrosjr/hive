@@ -35,9 +35,7 @@ type NativeNotifications = {
 };
 
 const nativeNotifications =
-  Platform.OS === "android"
-    ? requireNativeModule<NativeNotifications>("HIVENotifications")
-    : null;
+  Platform.OS === "android" ? requireNativeModule<NativeNotifications>("HIVENotifications") : null;
 
 export type NotificationThreadTarget = { botId?: string; threadId?: string };
 

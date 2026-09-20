@@ -4,10 +4,10 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   desktopOAuthCode,
-  oauthStateOf,
-  onDesktopOAuthCallback,
   type HIVEDesktop,
   type HIVEDesktopOAuthCallback,
+  oauthStateOf,
+  onDesktopOAuthCallback,
   windowChromeKind,
 } from "./desktop.js";
 
