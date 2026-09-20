@@ -1536,6 +1536,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const connectorSchemas = new Map(
           exposedConnectorTools.map((tool) => [tool.name, tool.inputSchema] as const),
         );
+        const connectorReadOnly = new Map(
+          exposedConnectorTools.map((tool) => [tool.name, tool.readOnly] as const),
+        );
         let approvalRulesPromise: Promise<ActionApprovalRule[]> | undefined;
         const loadApprovalRules = () => {
           approvalRulesPromise ??= deps.prisma.actionApprovalRule
@@ -1744,6 +1747,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           if (approvedReplay.args) connectorCall.args = approvedReplay.args;
           let catalogRemapped = false;
           let resolvedToolSchema: Record<string, unknown> | undefined;
+          let resolvedToolReadOnly: boolean | undefined;
           if (name.startsWith("cloud_agent_") && !validCloudAgentArgs(name, args)) {
             return {
               error: "Invalid cloud agent arguments. Raw environment variables are not supported.",
@@ -1761,6 +1765,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 args = resolved.call.args;
                 catalogRemapped = true;
                 resolvedToolSchema = resolved.tool.inputSchema;
+                resolvedToolReadOnly = resolved.tool.readOnly;
                 effectRequest = catalogApprovalRequest(
                   connectorCall.tool,
                   connectorCall.args,
@@ -1899,13 +1904,16 @@ export function createRunExecutor(deps: ExecutorDeps) {
             }
           }
           const viaConnector = !BUILTIN_AGENT_TOOL_NAMES.has(name);
+          // `name` is the inner tool once the catalog remapped it, so read the
+          // hint off the resolved target first and fall back to the direct map.
+          const toolIsReadOnly = resolvedToolReadOnly ?? connectorReadOnly.get(name);
           const requiresUnattendedApproval = unattendedTriggerToolRequiresApproval(
             run.trigger,
             name,
             viaConnector,
           );
           const requiresApprovalByDefault =
-            requiresUnattendedApproval || toolRequiresApproval(name, viaConnector);
+            requiresUnattendedApproval || toolRequiresApproval(name, viaConnector, toolIsReadOnly);
           const requiresMandatoryApproval =
             requiresUnattendedApproval || toolRequiresExplicitApproval(name);
           const connectorKind = connectorKindFromToolName(

@@ -76,17 +76,31 @@ export function connectorKindFromToolName(toolName: string, connectorKinds: stri
   return (segment ?? toolName).toLowerCase();
 }
 
-export function connectorToolRequiresApproval(toolName: string): boolean {
+/**
+ * The name patterns only recognise English verbs, so a connector whose tools are
+ * named in another language falls through to the closing `return true` and asks
+ * for approval on every read. `readOnly` is the server's `readOnlyHint`, and it
+ * settles that case — but only below the mutating patterns, so a hint can never
+ * clear a tool whose own name says it deletes, sends or pays. A server that
+ * wants to escape approval by naming a destructive tool `get_items` can already
+ * do that without the hint; this adds no bypass that names do not.
+ */
+export function connectorToolRequiresApproval(toolName: string, readOnly?: boolean): boolean {
   if (MUTATING_CONNECTOR_PATTERN.test(toolName)) return true;
   if (COMPOUND_CONNECTOR_ACTION_PATTERN.test(toolName)) return true;
+  if (readOnly === true) return false;
   return !READ_ONLY_CONNECTOR_PATTERN.test(toolName);
 }
 
-export function toolRequiresApproval(toolName: string, viaConnector: boolean): boolean {
+export function toolRequiresApproval(
+  toolName: string,
+  viaConnector: boolean,
+  readOnly?: boolean,
+): boolean {
   if (APPROVAL_EXEMPT_TOOLS.has(toolName)) return false;
   if (toolRequiresExplicitApproval(toolName)) return true;
   if (APPROVAL_REQUIRED_BUILTIN_TOOLS.has(toolName)) return true;
-  if (viaConnector) return connectorToolRequiresApproval(toolName);
+  if (viaConnector) return connectorToolRequiresApproval(toolName, readOnly);
   return false;
 }
 
@@ -102,6 +116,9 @@ export function unattendedTriggerToolRequiresApproval(
   viaConnector: boolean,
 ): boolean {
   if (trigger !== "webhook") return false;
+  // Deliberately name-based: the server's read-only hint saves a present human
+  // a tap, but on a webhook run nobody is watching, so a remote declaration must
+  // not be what decides the owner can be skipped.
   return viaConnector
     ? connectorToolRequiresApproval(toolName)
     : !UNATTENDED_SAFE_BUILTIN_TOOLS.has(toolName);

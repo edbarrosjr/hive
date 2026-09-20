@@ -132,12 +132,18 @@ would be a promise the system cannot pay.
 
 These are not part of the feature. They are defects the feature would inherit.
 
-1. **Read tools trigger an approval card.** `connectorToolRequiresApproval`
-   (`packages/core/src/action-approval.ts:79`) fails closed, and
-   `READ_ONLY_CONNECTOR_PATTERN` only matches English verbs — no non-English tool
-   name is ever recognised as read-only. `remote-mcp.ts:60` already reads
-   `tool.annotations?.readOnlyHint`; `mcp-connector.ts` does not propagate it.
-   Propagate it and honour it. Without this, every question costs an approval tap.
+1. **Reads from a connector named in another language count as consequential.**
+   *Done — see the `readOnlyHint` change.* `READ_ONLY_CONNECTOR_PATTERN`
+   (`packages/core/src/action-approval.ts:55`) only matches English verbs, and
+   `connectorToolRequiresApproval` closes on anything it cannot read, so a tool
+   named `minhas_vendas` was classified like a write. That is not an approval
+   card on every question — with no stored rule and auto review off,
+   `planActionGate` still allows it — but it did mean the tool went to the
+   review judge whenever auto review was on, stopped for the owner on every
+   webhook run, and took the approval effect key. `remote-mcp.ts:60` already
+   read `tool.annotations?.readOnlyHint`; `mcp-connector.ts` now propagates it
+   and the executor honours it, below the mutating-name patterns and never on an
+   unattended run.
 2. **Unknown blocks must degrade.** Replace the `return null` at
    `Shell.tsx:6178` with a generic renderer, and give
    `apps/mobile/lib/api.ts:887` the same default. This pays a debt that already

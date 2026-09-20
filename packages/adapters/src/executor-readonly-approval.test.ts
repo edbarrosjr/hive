@@ -39,11 +39,14 @@ function fixture({
   rules = [] as ActionApprovalRule[],
   autoReview = false,
   trigger = "user",
+  // Destructuring defaults swallow an explicit `undefined`, so absence of the
+  // server hint needs its own flag to be testable at all.
+  omitReadOnly = false,
 } = {}) {
   const tool: ConnectorTool = {
     name,
     description: "Read an item",
-    readOnly: true,
+    readOnly: omitReadOnly ? undefined : true,
     inputSchema: {
       type: "object",
       properties: { id: { type: "string" } },
@@ -355,6 +358,59 @@ describe("connector read-only metadata and approval enforcement", () => {
       expect(f.results).toEqual([{ item: "item-1" }, { item: "item-1" }]);
       expect(f.pauseRunForInput).not.toHaveBeenCalled();
       expect(runAutoReviewJudge).not.toHaveBeenCalled();
+    });
+
+    // The name patterns only read English, so a connector named in another
+    // language is treated as consequential: it goes to the judge under auto
+    // review, stops for the owner on a webhook run, and takes the approval
+    // effect key. The server's read-only hint is what settles that.
+    it("treats a name the patterns cannot parse as an ordinary read when the server says so", async () => {
+      const f = fixture({
+        catalog,
+        name: "mcp__clave__minhas_vendas",
+        autoReview: true,
+      });
+      f.setCalls([{ args: { id: "item-1" }, executionId: "call-1" }]);
+      await f.run();
+      expect(f.execute).toHaveBeenCalledOnce();
+      expect(f.pauseRunForInput).not.toHaveBeenCalled();
+      expect(runAutoReviewJudge).not.toHaveBeenCalled();
+    });
+
+    it("sends the same unreadable name to the judge when the hint is absent", async () => {
+      const f = fixture({
+        catalog,
+        name: "mcp__clave__minhas_vendas",
+        omitReadOnly: true,
+        autoReview: true,
+      });
+      f.setCalls([{ args: { id: "item-1" }, executionId: "call-1" }]);
+      await f.run();
+      expect(runAutoReviewJudge).toHaveBeenCalledOnce();
+    });
+
+    it("keeps a mutating name consequential even when the server claims read-only", async () => {
+      const f = fixture({
+        catalog,
+        name: "demo_delete_item",
+        autoReview: true,
+      });
+      f.setCalls([{ args: { id: "item-1" }, executionId: "call-1" }]);
+      await f.run();
+      expect(runAutoReviewJudge).toHaveBeenCalledOnce();
+    });
+
+    it("stops for the owner on a webhook run however the server annotates the tool", async () => {
+      const f = fixture({
+        catalog,
+        name: "mcp__clave__minhas_vendas",
+        trigger: "webhook",
+      });
+      f.setCalls([{ args: { id: "item-1" }, executionId: "call-1" }]);
+      await f.run();
+      expect(f.execute).not.toHaveBeenCalled();
+      expect(f.pauseRunForInput).toHaveBeenCalledOnce();
+      expect(isApprovalPausedResult(f.results[0])).toBe(true);
     });
 
     it("replays a non-approval connector effect when the tool-call id changes", async () => {
