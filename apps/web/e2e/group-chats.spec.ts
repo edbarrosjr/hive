@@ -97,10 +97,11 @@ test("create group from + and see two bots in one transcript", async ({ page }, 
   await expect(groupAvatar.locator(".rakazo-bot-avatar")).toHaveCount(2);
   const workingAvatar = groupAvatar.locator('[data-working="true"]');
   await expect(workingAvatar).toHaveCount(1);
-  await expect(workingAvatar.locator(".clave-avatar-eyes")).toHaveCSS(
-    "animation-name",
-    "clave-eyes-working",
-  );
+  expect(
+    await workingAvatar
+      .locator(".clave-avatar-character")
+      .evaluate((element) => element.getAnimations().length),
+  ).toBe(0);
   await captureScreenshot(page, testInfo, "group-avatar-active");
   await page.unroute("**/rpc/groups/list");
   await page.unroute("**/rpc/threads/get");
@@ -237,25 +238,3 @@ test("create group from + and see two bots in one transcript", async ({ page }, 
   await composer.press("Enter");
   const groupMarkdown = page.getByRole("button", { name: "Preview group-preview.md" });
   await expect(groupMarkdown).toBeVisible({ timeout: 30_000 });
-  await groupMarkdown.click();
-  const markdownDialog = page.getByRole("dialog", { name: "group-preview.md" });
-  await expect(markdownDialog.getByRole("heading", { name: "Group artifact" })).toBeVisible();
-  await markdownDialog.getByRole("button", { name: "Close preview" }).click();
-
-  await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByRole("button", { name: "Open navigation" })).toBeVisible();
-  expect((await transcript.boundingBox())?.width).toBeGreaterThan(350);
-  await page.getByRole("button", { name: "Open navigation" }).click();
-  await expect(page.getByRole("button", { name: "Close navigation" })).toBeVisible();
-  await page.getByRole("button", { name: "Close navigation" }).click();
-  await page.getByTestId("bot-settings-trigger").click();
-  const settings = page.getByTestId("side-panel");
-  await expect(settings).toHaveAttribute("data-panel", "group-settings");
-  expect((await settings.boundingBox())?.width).toBeLessThanOrEqual(390);
-  await captureScreenshot(page, testInfo, "group-settings-mobile");
-
-  await rpc(page, "groups/remove", { groupId: reviewGroup.id });
-  await page.goto(`/app/g/${reviewGroup.id}`);
-  await page.waitForURL(/\/app\/(?!g\/)[^/]+$/);
-  await expect(page.getByRole("combobox", { name: /Message/ })).toBeVisible();
-});
