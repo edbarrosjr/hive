@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { readBoundedJsonResponse, signupRequiresEmailVerification } from "@rakazo/core";
-import { Button, Input, Label } from "@rakazo/ui-web";
+import { BotAvatar, Button, Input, Label } from "@rakazo/ui-web";
 import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -337,10 +337,7 @@ function AuthFrame({
   return (
     <div className="flex min-h-full items-center justify-center bg-background px-6 py-16 text-foreground">
       <form onSubmit={onSubmit} className="flex w-[460px] flex-col items-center">
-        <div className="flex h-[74px] w-[74px] items-center justify-center gap-[11px] rounded-full bg-muted">
-          <span className="h-5 w-[9px] rounded-full bg-primary" />
-          <span className="h-5 w-[9px] rounded-full bg-primary" />
-        </div>
+        <BotAvatar color="" size={74} />
         <h1 aria-live="polite" className="mb-9 mt-7 text-4xl font-medium tracking-tight">
           {title}
         </h1>
