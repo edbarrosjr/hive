@@ -178,13 +178,25 @@ These are not part of the feature. They are defects the feature would inherit.
 
 ## Phases
 
-**Phase 0 — measure before building.** Teach the model to answer tabular
-questions with a GFM table. `remarkGfm` is on (`packages/chat-ui/src/markdown.web.tsx:100`)
-and the web stylesheet covers `table/th/td`. *Verify the native side first*:
-`markdown.native.tsx:83` styles only `table` and `tr`, there is no table test in
-`chat-ui`, and on mobile only bot-role messages go through markdown at all
-(`apps/mobile/app/thread.tsx:2917`). If tables render on both surfaces, a
-prompt-only change may capture much of the value and reframe everything below.
+**Phase 0 — measure before building.** *Verified: tables render on both
+surfaces, and there are now tests that say so.* The web renderer has `remarkGfm`
+on and produces `<table>`, `<th>` and `<td>`. The native one gets tables from
+markdown-it's default preset — nothing in this package configures either — and
+its parser yields every node type the library draws: `table`, `thead`, `tbody`,
+`tr`, `th`, `td`. The earlier doubt came from `markdown.native.tsx` styling only
+`table` and `tr`, but that is a border-colour override on top of the library's
+own styles, not the rendering itself.
+
+What remains for this phase is the cheap half: teach the model to answer tabular
+questions with a table. No renderer changes, no contract changes. Two caveats to
+carry: on mobile only bot-role messages go through markdown at all
+(`apps/mobile/app/thread.tsx:2917`), so this never applies to what the user
+typed; and a table is a shape, not a source of truth — the rule that no rendered
+figure may originate in prose still binds, so the model formats what a tool
+returned rather than composing numbers into a grid.
+
+Measure here before building the rest. If a table carries most of the value for
+the anchor question, that reframes everything below.
 
 **Phase 1 — contract, lifecycle and degradation.** Add `PanelBlock` (with `v: 1`)
 to the union and `packages/core/src/panel/` (pure, no React, no DOM — sibling of

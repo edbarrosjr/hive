@@ -14,6 +14,18 @@ describe("ChatMarkdown", () => {
     expect(html).toContain("<code>commands</code>");
   });
 
+  it("renders a GFM table, which is how tabular answers reach the thread", () => {
+    const html = renderToStaticMarkup(
+      <ChatMarkdown>
+        {["| Etapa | Estado |", "| --- | --- |", "| Credito | em analise |"].join("\n")}
+      </ChatMarkdown>,
+    );
+
+    expect(html).toContain("<table>");
+    expect(html).toContain("<th>Etapa</th>");
+    expect(html).toContain("<td>em analise</td>");
+  });
+
   it("does not inject raw HTML or unsafe link protocols", () => {
     const html = renderToStaticMarkup(
       <ChatMarkdown>{'<script>alert("xss")</script> [bad](javascript:alert(1))'}</ChatMarkdown>,
