@@ -85,6 +85,71 @@ const ChartBlock = z
     });
   });
 
+export const MAX_PANEL_SECTIONS = 6;
+export const MAX_PANEL_ROWS = 24;
+export const MAX_PANEL_STEPS = 12;
+
+/** Semantic only. It maps to a token; a producer never picks a colour. */
+const PanelTone = z.enum(["neutral", "ok", "attention", "risk"]);
+const PanelLabel = z.string().trim().min(1).max(80);
+const PanelValue = z.string().trim().min(1).max(160);
+
+const PanelFacts = z.object({
+  section: z.literal("facts"),
+  label: PanelLabel.optional(),
+  rows: z
+    .array(z.object({ k: PanelLabel, v: PanelValue, tone: PanelTone.optional() }))
+    .min(1)
+    .max(MAX_PANEL_ROWS),
+});
+
+const PanelTrack = z.object({
+  section: z.literal("track"),
+  label: PanelLabel.optional(),
+  steps: z
+    .array(
+      z.object({
+        label: PanelLabel,
+        state: z.enum(["done", "current", "pending", "blocked", "skipped"]),
+        note: PanelValue.optional(),
+      }),
+    )
+    .min(2)
+    .max(MAX_PANEL_STEPS),
+});
+
+const PanelNote = z.object({
+  section: z.literal("note"),
+  text: z.string().trim().min(1).max(280),
+  tone: PanelTone.optional(),
+});
+
+const PanelSection = z.discriminatedUnion("section", [PanelFacts, PanelTrack, PanelNote]);
+export type PanelSection = z.infer<typeof PanelSection>;
+
+const PanelBlock = z.object({
+  /** A panel the backend built from a tool's structured result. The model
+      chooses which tool to call; it never authors what is drawn here. */
+  kind: z.literal("panel"),
+  /** Envelope version. Present from the first panel ever written, because it
+      cannot be added later to rows already in the database. */
+  v: z.literal(1),
+  /** The subject, not the call: a second question about the same thing
+      rewrites this panel instead of stacking another one. */
+  key: z.string().trim().min(1).max(200),
+  title: PanelLabel,
+  /** pending while the tool runs, so the thread is not blank for its duration. */
+  status: z.enum(["pending", "ready", "failed"]),
+  /** Where the data came from, for the line that names its provenance. */
+  source: PanelLabel.optional(),
+  /** The producer's clock is never trusted: the backend clamps this to the
+      window between the call starting and now. */
+  asOf: z.string().optional(),
+  sections: z.array(PanelSection).max(MAX_PANEL_SECTIONS).optional(),
+  /** Why it failed, in a line a person can read. Only when status is failed. */
+  error: PanelValue.optional(),
+});
+
 export const SecretAskPurpose = z.enum(["otp", "password", "api_key"]);
 export type SecretAskPurpose = z.infer<typeof SecretAskPurpose>;
 
@@ -203,6 +268,7 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     status: z.enum(["draft", "saved"]),
   }),
   ChartBlock,
+  PanelBlock,
   z.object({
     /** Approval card for an agent-created MCP server. The user completes the
         OAuth popup (or confirms no authorization is needed) in the UI. */

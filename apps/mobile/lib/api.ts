@@ -18,6 +18,7 @@ import {
   ensureAiDataConsent,
   isRunTerminalEvent,
   mergeThreadHistory,
+  panelToText,
   prependThreadHistoryPage,
   progressMessageId,
   readBoundedJsonResponse,
@@ -885,6 +886,7 @@ export function blockText(message: MobileMessage) {
           .map((step) => `${step.label}${step.count > 1 ? ` ×${step.count}` : ""}`)
           .join(" · ");
       }
+      if (block.kind === "panel") return panelToText(block);
       if (block.kind === "card") {
         return (block.lines ?? []).map((line) => `${line.k}: ${line.v}`).join("\n");
       }
