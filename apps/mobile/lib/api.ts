@@ -25,6 +25,7 @@ import {
   runFailureError,
   signupRequiresEmailVerification,
   takeLiveMessage,
+  unknownBlockSummary,
   updateCloudAgentMessages,
   upsertMessageById,
 } from "@rakazo/core";
@@ -884,7 +885,15 @@ export function blockText(message: MobileMessage) {
           .map((step) => `${step.label}${step.count > 1 ? ` ×${step.count}` : ""}`)
           .join(" · ");
       }
-      return ("text" in block ? block.text : "state" in block ? block.state : "") ?? "";
+      if (block.kind === "card") {
+        return (block.lines ?? []).map((line) => `${line.k}: ${line.v}`).join("\n");
+      }
+      if (block.kind === "choice") {
+        const answer = block.options?.find((option) => option.id === block.answerId);
+        return answer ? `${block.question} — ${answer.label}` : block.question;
+      }
+      // Anything without a case of its own, including a kind this build predates.
+      return unknownBlockSummary(block) ?? "";
     })
     .filter(Boolean)
     .join("\n");

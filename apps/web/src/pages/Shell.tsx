@@ -229,6 +229,7 @@ import {
   ChartBlockView,
   ChoiceCard,
   McpApprovalCard,
+  UnknownBlockCard,
 } from "./shell/message-cards";
 import { WindowChrome } from "./WindowChrome";
 
@@ -6176,7 +6177,7 @@ const MessageView = memo(function MessageView({
             </div>
           );
         }
-        return null;
+        return <UnknownBlockCard key={`${message.id}-${i}`} block={block} />;
       })}
     </>
   );

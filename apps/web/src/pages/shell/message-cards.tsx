@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { MessageBlock } from "@rakazo/contracts";
-import { abortableDelay } from "@rakazo/core";
+import { abortableDelay, unknownBlockSummary } from "@rakazo/core";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo/ui-web";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -379,6 +379,24 @@ export function McpApprovalCard({
           <Trans>Dismissed. Reconnect anytime from MCP settings.</Trans>
         </p>
       ) : null}
+    </BuiCard>
+  );
+}
+
+/**
+ * A block this build has no renderer for. It exists so the chain that draws a
+ * message never ends in nothing: a kind added by a newer server, or one an
+ * older client predates, still leaves a line a person can read. What it shows
+ * is whatever the block carries for a reader — never a payload dump, which
+ * would put a server's internals in front of a user.
+ */
+export function UnknownBlockCard({ block }: { block: MessageBlock }) {
+  const summary = unknownBlockSummary(block);
+  if (!summary) return null;
+
+  return (
+    <BuiCard className="max-w-[74%] border-dashed p-3.5">
+      <p className="text-[14px] leading-[1.5] text-foreground/80">{summary}</p>
     </BuiCard>
   );
 }
