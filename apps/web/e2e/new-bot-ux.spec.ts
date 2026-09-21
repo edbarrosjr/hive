@@ -137,7 +137,9 @@ test("later bot waits before showing the focus card; sending cancels it", async 
   );
   await page.keyboard.press("Enter");
   await sent;
-  await expect(page.getByTestId("transcript").getByText("I'll set this up myself")).toBeVisible();
+  await expect(
+    page.getByTestId("transcript").getByText("I'll set this up myself", { exact: true }),
+  ).toBeVisible();
   await page.clock.fastForward(12_000);
   await expect(page.getByText("What do you want me on first?", { exact: true })).toHaveCount(0);
 });
