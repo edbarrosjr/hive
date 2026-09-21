@@ -160,7 +160,7 @@ These are not part of the feature. They are defects the feature would inherit.
    `tool.annotations?.readOnlyHint`; `mcp-connector.ts` now propagates it and the
    executor honours it, below the mutating-name patterns and never on an
    unattended run.
-2. **A bubble whose blocks all render empty disappears.** `blockText`
+2. **A bubble whose blocks all render empty disappears.** *Done.* `blockText`
    (`apps/mobile/lib/api.ts:863`) has eight per-kind cases and a generic fallback
    that returns `""` for anything else; `apps/mobile/app/thread.tsx:2871` turns an
    empty string into `return null`. The kinds that have real producers and vanish
@@ -170,16 +170,17 @@ These are not part of the feature. They are defects the feature would inherit.
    renderer chain ends in `return null` (`apps/web/src/pages/Shell.tsx:6179`).
    Both surfaces need a generic renderer, and the fix belongs to the bubble —
    "I cannot draw this, so draw the minimum line" — not to the text projection.
-3. **Secret redaction does not cover tool-published blocks.** `redactBlocks`
-   (`executor.ts:4651`) is only called on `messageSegments`
-   (`executor.ts:3881`, `:4086`). Blocks published by tool handlers — `chart`
-   included — never pass through it. A block carrying free text from an external
-   server must.
+3. **Secret redaction does not cover tool-published blocks.** *Done.*
+   Redaction ran only on the segments that end a turn, so every tool handler
+   publishing a block of its own went around it. `publishMessage` now takes the
+   run's secret list — required, so the compiler catches a call site that
+   forgets — and redaction walks the block's structure instead of naming three
+   kinds. It lives in `packages/core` beside `redactSecrets`.
 
 ## Phases
 
-**Phase 0 — measure before building.** *Verified: tables render on both
-surfaces, and there are now tests that say so.* The web renderer has `remarkGfm`
+**Phase 0 — measure before building.** *Verified, with tests: tables render on
+both surfaces.* The web renderer has `remarkGfm`
 on and produces `<table>`, `<th>` and `<td>`. The native one gets tables from
 markdown-it's default preset — nothing in this package configures either — and
 its parser yields every node type the library draws: `table`, `thead`, `tbody`,
@@ -198,7 +199,10 @@ returned rather than composing numbers into a grid.
 Measure here before building the rest. If a table carries most of the value for
 the anchor question, that reframes everything below.
 
-**Phase 1 — contract, lifecycle and degradation.** Add `PanelBlock` (with `v: 1`)
+**Phase 1 — contract, lifecycle and degradation.** *Largely landed: the
+contract, the pure module, the web renderer and element-wise reads are in. What
+is left of this phase is the native mobile renderer, which ships with the
+producer so it can be exercised end to end.* Add `PanelBlock` (with `v: 1`)
 to the union and `packages/core/src/panel/` (pure, no React, no DOM — sibling of
 `plot/`). Web renderer in `apps/web/src/pages/shell/message-cards.tsx` on vendored
 `Card`/`Badge`/`Separator`. A real native renderer on mobile, viable precisely
