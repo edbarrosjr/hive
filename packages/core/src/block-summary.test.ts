@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { unknownBlockSummary } from "./block-summary.js";
+import { parseBlocks, unknownBlockSummary } from "./block-summary.js";
 
 describe("unknownBlockSummary", () => {
   it("reads the conventional display fields in order", () => {
@@ -35,5 +35,35 @@ describe("unknownBlockSummary", () => {
     expect(unknownBlockSummary({ kind: "", lines: [] })).toBeUndefined();
     expect(unknownBlockSummary(null)).toBeUndefined();
     expect(unknownBlockSummary("not a block")).toBeUndefined();
+  });
+});
+
+describe("parseBlocks", () => {
+  // The failure this exists to prevent: an api behind the worker that wrote the
+  // row meets a kind its contract has never seen, and the whole thread stops
+  // loading for everyone in it.
+  it("costs the unknown block instead of the message", () => {
+    const blocks = parseBlocks([
+      { kind: "text", text: "A venda está na etapa 3." },
+      { kind: "panel_from_a_newer_build", title: "VENDA-123" },
+      { kind: "meta", text: "Renomeou o bot" },
+    ]);
+
+    expect(blocks).toEqual([
+      { kind: "text", text: "A venda está na etapa 3." },
+      { kind: "meta", text: "Renomeou o bot" },
+    ]);
+  });
+
+  it("drops a block whose own fields are malformed", () => {
+    expect(parseBlocks([{ kind: "text" }, { kind: "text", text: "ok" }])).toEqual([
+      { kind: "text", text: "ok" },
+    ]);
+  });
+
+  it("treats a column that is not an array as no blocks at all", () => {
+    expect(parseBlocks(null)).toEqual([]);
+    expect(parseBlocks({ kind: "text", text: "solto" })).toEqual([]);
+    expect(parseBlocks("[]")).toEqual([]);
   });
 });

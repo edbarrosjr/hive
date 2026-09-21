@@ -1,5 +1,5 @@
 import type { MessageBlock, ThreadMessage, ThreadMessagePage } from "@rakazo/contracts";
-import { isPeerReceiptBlocks } from "@rakazo/core";
+import { isPeerReceiptBlocks, parseBlocks } from "@rakazo/core";
 import type { Prisma, PrismaClient } from "@rakazo/db";
 
 type MessageDb = PrismaClient | Prisma.TransactionClient;
@@ -184,7 +184,7 @@ function toThreadMessage(row: {
     threadId: row.threadId,
     seq: row.seq,
     role: row.role as ThreadMessage["role"],
-    blocks: row.blocks as ThreadMessage["blocks"],
+    blocks: parseBlocks(row.blocks),
     botId: row.botId ?? undefined,
     replyToMessageId: row.replyToMessageId ?? undefined,
     replyQuote: row.replyQuote ?? undefined,

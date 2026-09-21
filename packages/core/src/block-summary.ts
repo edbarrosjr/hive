@@ -1,3 +1,6 @@
+import type { MessageBlock } from "@rakazo/contracts";
+import { MessageBlock as MessageBlockSchema } from "@rakazo/contracts";
+
 /**
  * The last line of defence before a block renders as nothing.
  *
@@ -42,4 +45,29 @@ function looksLikeId(value: string): boolean {
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value) ||
     /^[0-9a-f]{24,}$/i.test(value)
   );
+}
+
+/**
+ * Blocks from a row, parsed one at a time.
+ *
+ * Blocks are stored as Json and were read back with a cast, which is fine until
+ * a row holds a kind the reader does not know — and that is not hypothetical
+ * with more than one deployable in play. The api reads rows the worker wrote,
+ * so an api rolled back behind the worker, or simply deployed second, meets a
+ * block its contract has never seen. Validating the array as a whole makes that
+ * one unknown block fail the message, and the message fail the page, and the
+ * page fail the thread for everyone in it.
+ *
+ * Parsing element by element costs the block instead. What survives is
+ * everything the reader does understand, which is the difference between a
+ * bubble missing a card and a thread that will not open.
+ */
+export function parseBlocks(value: unknown): MessageBlock[] {
+  if (!Array.isArray(value)) return [];
+  const blocks: MessageBlock[] = [];
+  for (const candidate of value) {
+    const parsed = MessageBlockSchema.safeParse(candidate);
+    if (parsed.success) blocks.push(parsed.data);
+  }
+  return blocks;
 }
