@@ -252,6 +252,8 @@ services:
     environment:
       NODE_ENV: production
       API_PROXY_TARGET: http://api:3100
+      # Vite rejects public preview requests whose Host is not explicitly
+      # allowed. Set this to the hostname only, without scheme or port.
       RAKAZO_HOST: ${RAKAZO_HOST:-localhost}
       # Set only by the packaged desktop app. Its authenticated probe prevents a
       # source dev server on the same host port from impersonating this stack.
@@ -276,29 +278,45 @@ services:
   # projeto usa em producao. /health, /api/* e /rpc/* vao DIRETO para a api;
   # so o resto vai para a tela.
   #
-  # ENDERECO: o Caddy serve exatamente ${HIVE_ORIGIN}, a MESMA variavel que
-  # alimenta BETTER_AUTH_URL/WEB_ORIGIN/API_URL la em cima. E de proposito:
-  # enquanto forem a mesma variavel, o endereco servido e o endereco confiado
-  # nao podem divergir. Nunca troque uma sem a outra.
+  # ORIGEM PUBLICA: HIVE_ORIGIN e o endereco visto pelo navegador. Ele alimenta
+  # BETTER_AUTH_URL/WEB_ORIGIN/API_URL e precisa ser uma origem completa, sem
+  # barra final. RAKAZO_HOST e somente o hostname dessa mesma origem, sem
+  # protocolo ou porta, para a validacao de Host do preview do Vite.
   #
-  # As duas combinacoes validas:
+  # ENDERECO DO CADDY: por padrao, HIVE_CADDY_ADDRESS vazio faz o Caddy servir
+  # a propria HIVE_ORIGIN. Quando ja existe um proxy TLS no host (Nginx,
+  # Traefik, painel da hospedagem), defina um endereco HTTP interno separado.
+  # O proxy externo termina o HTTPS e encaminha para HIVE_CADDY_ADDRESS.
+  #
+  # Configuracoes validas:
   #
   #   porta padrao, certificado do Let's Encrypt (preferida):
-  #     HIVE_ORIGIN=https://seu.host        HIVE_PORT=443   HIVE_TLS=
+  #     HIVE_ORIGIN=https://seu.host        RAKAZO_HOST=seu.host
+  #     HIVE_PORT=443                       HIVE_CADDY_ADDRESS=   HIVE_TLS=
   #     exige 80 e 443 livres na maquina (o desafio do certificado usa uma
   #     das duas); acrescente "80:80" em ports se o certificado nao sair.
   #
+  #   atras de Nginx/Traefik que ja ocupa 80/443:
+  #     HIVE_ORIGIN=https://seu.host        RAKAZO_HOST=seu.host
+  #     HIVE_PORT=8443                      HIVE_BIND_ADDRESS=127.0.0.1
+  #     HIVE_CADDY_ADDRESS=http://:8443     HIVE_TLS=
+  #     configure o proxy do host para http://127.0.0.1:8443; ha um exemplo
+  #     completo em infra/compose/nginx.hive.example.conf.
+  #
   #   porta alternativa, certificado proprio (quando 80/443 estao ocupadas):
-  #     HIVE_ORIGIN=https://seu.host:8443   HIVE_PORT=8443  HIVE_TLS=internal
+  #     HIVE_ORIGIN=https://seu.host:8443   RAKAZO_HOST=seu.host
+  #     HIVE_PORT=8443                      HIVE_CADDY_ADDRESS=
+  #     HIVE_TLS=internal
   #     o navegador avisa uma vez; a porta precisa estar aberta no firewall.
   # ------------------------------------------------------------------
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
     ports:
-      - "${HIVE_PORT:-443}:${HIVE_PORT:-443}"
+      - "${HIVE_BIND_ADDRESS:-0.0.0.0}:${HIVE_PORT:-443}:${HIVE_PORT:-443}"
     environment:
       HIVE_ORIGIN: ${HIVE_ORIGIN:?Defina HIVE_ORIGIN, ex https://host ou https://host:8443}
+      HIVE_CADDY_ADDRESS: ${HIVE_CADDY_ADDRESS:-}
       HIVE_TLS: ${HIVE_TLS:-}
     command:
       - sh
@@ -308,8 +326,13 @@ services:
         # Caddyfile a chave de abertura tem de ser o fim da linha. Em uma
         # linha so o arquivo nao compila, o processo morre e o contendor
         # entra em loop de reinicio — sem porta de entrada para o HIVE.
+        if [ -n "$$HIVE_CADDY_ADDRESS" ]; then
+          SITE_ADDRESS="$$HIVE_CADDY_ADDRESS"
+        else
+          SITE_ADDRESS="$$HIVE_ORIGIN"
+        fi
         {
-          echo "$$HIVE_ORIGIN {"
+          echo "$$SITE_ADDRESS {"
           [ -n "$$HIVE_TLS" ] && echo "	tls $$HIVE_TLS"
           echo "	encode zstd gzip"
           echo ""
