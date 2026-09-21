@@ -334,6 +334,38 @@ export function redactSecrets(value: string, secrets: string[]): string {
   }, value);
 }
 
+/**
+ * Every string a block carries, at any depth.
+ *
+ * Redaction used to name three kinds, which meant a secret was safe in a text
+ * block and not in a chart's data, an ask's detail or a subagent's result.
+ * Naming kinds is the wrong shape for the problem: the list has to be
+ * re-checked every time a kind is added, and nothing fails when it is not.
+ * Walking the structure covers the kinds that exist and the ones that do not
+ * exist yet.
+ */
+export function redactBlocks(blocks: MessageBlock[], secrets: string[]): MessageBlock[] {
+  // The common case is a run with no secrets, and a chart may carry thousands
+  // of rows: do not walk them to replace nothing.
+  if (!secrets.some((secret) => secret.length > 0)) return blocks;
+
+  const redactDeep = (value: unknown): unknown => {
+    if (typeof value === "string") return redactSecrets(value, secrets);
+    if (Array.isArray(value)) return value.map(redactDeep);
+    if (value && typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value as Record<string, unknown>).map(([key, item]) => [
+          key,
+          redactDeep(item),
+        ]),
+      );
+    }
+    return value;
+  };
+
+  return blocks.map((block) => redactDeep(block) as MessageBlock);
+}
+
 export function containsSecret(value: unknown, secrets: string[]): boolean {
   const active = secrets.filter((secret) => secret.length > 0);
   if (active.length === 0) return false;

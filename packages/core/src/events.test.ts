@@ -9,6 +9,7 @@ import {
   humanizeToolName,
   isRunTerminalEvent,
   projectMessages,
+  redactBlocks,
   reduceLiveMessageBlocks,
   runFailureError,
   sanitizeJsonValue,
@@ -25,6 +26,64 @@ describe("containsSecret", () => {
 
   it("does not confuse escaped text with the original control character", () => {
     expect(containsSecret({ value: "literal\\ntext" }, ["\n"])).toBe(false);
+  });
+});
+
+describe("redactBlocks", () => {
+  const secret = "sk-live-9f2c7a";
+
+  it("redacts a secret wherever it sits in a block, not only in text", () => {
+    const [chart, ask, subagent] = redactBlocks(
+      [
+        {
+          kind: "chart",
+          name: "Uso",
+          spec: { marks: [{ label: `token ${secret}` }] },
+          data: [{ key: secret, value: 3 }],
+        },
+        { kind: "ask", text: "Confirma?", detail: `usa ${secret}`, status: "pending" },
+        {
+          kind: "subagent",
+          agentId: "a-1",
+          name: "pesquisa",
+          task: "ler",
+          status: "completed",
+          result: `achei ${secret}`,
+        },
+      ] as never,
+      [secret],
+    ) as never as [
+      { spec: { marks: Array<{ label: string }> }; data: Array<{ key: string }> },
+      { detail: string },
+      { result: string },
+    ];
+
+    expect(chart.spec.marks[0]?.label).toBe("token [redacted]");
+    expect(chart.data[0]?.key).toBe("[redacted]");
+    expect(ask.detail).toBe("usa [redacted]");
+    expect(subagent.result).toBe("achei [redacted]");
+  });
+
+  // A kind added after this code was written is covered because the walk never
+  // asks what kind it is looking at.
+  it("covers a kind it has never heard of", () => {
+    const [block] = redactBlocks(
+      [{ kind: "panel", sections: [{ rows: [{ k: "Chave", v: secret }] }] }] as never,
+      [secret],
+    ) as never as [{ sections: Array<{ rows: Array<{ v: string }> }> }];
+
+    expect(block.sections[0]?.rows[0]?.v).toBe("[redacted]");
+  });
+
+  it("leaves everything else exactly as it was", () => {
+    const blocks = [
+      { kind: "text", text: "sem segredo" },
+      { kind: "steps", steps: [{ label: "Ler arquivo", count: 2 }] },
+    ] as never;
+
+    expect(redactBlocks(blocks, [secret])).toEqual(blocks);
+    expect(redactBlocks(blocks, [])).toBe(blocks);
+    expect(redactBlocks(blocks, [""])).toBe(blocks);
   });
 });
 
