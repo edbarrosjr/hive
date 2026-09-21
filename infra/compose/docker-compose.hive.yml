@@ -296,10 +296,6 @@ services:
     image: caddy:2-alpine
     restart: unless-stopped
     ports:
-      # A 80 existe para dois motivos: o desafio do Let's Encrypt e o desvio de
-      # http para https — sem ela, quem digita o endereco sem "https://" nao
-      # chega. Numa porta alternativa, aponte HIVE_HTTP_PORT para algo livre.
-      - "${HIVE_HTTP_PORT:-80}:80"
       - "${HIVE_PORT:-443}:${HIVE_PORT:-443}"
     environment:
       HIVE_ORIGIN: ${HIVE_ORIGIN:?Defina HIVE_ORIGIN, ex https://host ou https://host:8443}
