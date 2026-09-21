@@ -15,6 +15,7 @@ import type {
   Me,
   ProductEvent,
   Routine,
+  RunStatus,
   SearchHit,
   Space,
   SpaceMemoryConfig,
@@ -1671,6 +1672,19 @@ export function ShellPage() {
     ["running", "queued", "leased"].includes(run.status),
   );
   const transcriptRunning = workingRuns.length > 0;
+  const previousMascotRun = useRef<{ id: string; status: RunStatus } | null>(null);
+  const [completedMascotRun, setCompletedMascotRun] = useState<string | null>(null);
+  useEffect(() => {
+    const next = activeSnapshot?.run ?? null;
+    const previous = previousMascotRun.current;
+    previousMascotRun.current = next;
+    setCompletedMascotRun(null);
+    if (next?.status !== "completed" || previous?.id !== next.id || !isActive(previous.status))
+      return;
+    setCompletedMascotRun(next.id);
+    const timer = window.setTimeout(() => setCompletedMascotRun(null), 950);
+    return () => window.clearTimeout(timer);
+  }, [activeSnapshot?.run?.id, activeSnapshot?.run?.status, active?.id]);
   const composerRunning = currentRuns.some((run) => isActive(run.status));
   const runError = threadRunError(activeSnapshot, dismissedRunErrorIds);
   const displayedRunError = !sendError ? runError : null;
@@ -2936,6 +2950,7 @@ export function ShellPage() {
                         >
                           {item.kind === "bot" ? (
                             <BotAvatar
+                              animate={false}
                               color={item.chat.color}
                               identity={item.chat.id}
                               size={38}
@@ -3028,6 +3043,7 @@ export function ShellPage() {
                   {archivedBots.map((bot) => (
                     <div key={bot.id} className="flex items-center gap-2 rounded-lg px-2.5 py-2">
                       <BotAvatar
+                        animate={false}
                         color={bot.color}
                         identity={bot.id}
                         size={28}
@@ -3258,6 +3274,13 @@ export function ShellPage() {
                   identity={active.id}
                   size={26}
                   status={active.status}
+                  expression={
+                    transcriptRunning
+                      ? "thinking"
+                      : completedMascotRun === activeSnapshot?.run?.id
+                        ? "success"
+                        : "neutral"
+                  }
                 />
               ) : null}
               <span className="min-w-0">
@@ -3308,6 +3331,7 @@ export function ShellPage() {
             answerableAskMessageId={answerableAskMessageId}
             running={transcriptRunning}
             workingBots={workingBots}
+            mascotColor={active?.color ?? ""}
             onLoadOlder={loadOlder}
             onOpenBot={openBot}
             onAnswer={answerMessage}
@@ -4357,6 +4381,7 @@ const Transcript = memo(function Transcript({
   answerableAskMessageId,
   running,
   workingBots,
+  mascotColor,
   onLoadOlder,
   onOpenBot,
   onAnswer,
@@ -4383,6 +4408,7 @@ const Transcript = memo(function Transcript({
   answerableAskMessageId: string | null;
   running: boolean;
   workingBots: GroupAvatarMember[];
+  mascotColor: string;
   onLoadOlder: () => void | Promise<void>;
   onOpenBot: (botId: string) => void;
   onAnswer: (message: ThreadMessage, text: string) => Promise<void>;
@@ -4593,6 +4619,14 @@ const Transcript = memo(function Transcript({
           >
             {loadingOlder ? t`Loading…` : t`Load earlier messages`}
           </button>
+        ) : null}
+        {messages.length === 0 && !running && olderCursor == null ? (
+          <div
+            className="flex flex-1 items-center justify-center"
+            data-testid="chat-welcome-mascot"
+          >
+            <BotAvatar color={mascotColor} size={96} animate={false} />
+          </div>
         ) : null}
         {reactionView.visibleMessages.map((message) => {
           if (!message.blocks.some((block) => !isToolActivityBlock(block))) return null;

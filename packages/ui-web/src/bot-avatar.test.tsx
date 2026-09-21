@@ -1,4 +1,5 @@
 import { ACTIVE_RUN_STATUSES, CLAVE_AVATAR_BODY_PATH } from "@rakazo/core";
+import { darkTokens } from "@rakazo/ui-tokens";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
@@ -85,12 +86,12 @@ describe("BotAvatar", () => {
     expect(resolvePersonaColorDef("bot", "#ggg")).toEqual(resolvePersonaColorDef("bot"));
   });
 
-  it("renders uploaded images without the geometric svg", () => {
+  it("uses the fixed mascot for legacy image avatars without modifying their stored value", () => {
     const html = renderToString(
       <BotAvatar color="data:image/png;base64,abc" identity="maya" size={32} />,
     );
-    expect(html).toContain("<img");
-    expect(html).not.toContain("<path");
+    expect(html).not.toContain("<img");
+    expect(html).toContain(CLAVE_AVATAR_BODY_PATH);
     expect(html).not.toContain("grok-character-eyes");
   });
 
@@ -105,13 +106,23 @@ describe("BotAvatar", () => {
     expect(html).not.toContain("evil.example");
   });
 
-  it("moves working state to the eyes and keeps the body static", () => {
+  it("exposes the body and eyes to the shared motion controller", () => {
     const html = renderToString(
       <BotAvatar color="#8B5CF6" identity="maya" size={32} status="running" />,
     );
     expect(html).toContain('class="clave-avatar-body"');
+    expect(html).toContain('class="clave-avatar-character"');
     expect(html).toContain('class="clave-avatar-eyes"');
     expect(html).not.toContain("animate-pulse");
+  });
+
+  it("keeps orange fixed while persisting eye-only identity", () => {
+    const html = renderToString(<BotAvatar color="clave::eyes_#312E81" />);
+    expect(html).toContain(`fill="${darkTokens.mascotBody}"`);
+    expect(html).toContain('class="clave-avatar-eyes" fill="#312E81"');
+    const legacy = renderToString(<BotAvatar color="#10B981" />);
+    expect(legacy).toContain(`fill="${darkTokens.mascotBody}"`);
+    expect(legacy).not.toContain('fill="#10B981"');
   });
 
   it("supports explicit eye-only expressions", () => {

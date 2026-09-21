@@ -2,12 +2,23 @@ import { describe, expect, it } from "vitest";
 import {
   BOT_AVATAR_VALUE_MAX_LENGTH,
   BotAvatarValueSchema,
+  encodeClaveAvatar,
   isBotAvatarValue,
   parseBotAvatarValue,
   UpdateBotInput,
 } from "./index.js";
 
 describe("bot avatar values", () => {
+  it("round trips eye customization through the update contract", () => {
+    const color = encodeClaveAvatar("#312e81");
+    expect(color).toBe("clave::eyes_#312E81");
+    expect(parseBotAvatarValue(color)).toEqual({ kind: "clave", eyeColor: "#312E81" });
+    expect(UpdateBotInput.safeParse({ botId: "bot-1", color }).success).toBe(true);
+    for (const invalid of ["clave::eyes_red", "clave::eyes_#123", "clave::eyes_#123456;url(x)"]) {
+      expect(isBotAvatarValue(invalid)).toBe(false);
+    }
+    expect(() => encodeClaveAvatar("red")).toThrow();
+  });
   it("parses hex, encoded shapes, and data images", () => {
     expect(parseBotAvatarValue("#8B5CF6")).toEqual({ kind: "color", color: "#8B5CF6" });
     expect(parseBotAvatarValue("#8B5CF6::shape_3")).toEqual({

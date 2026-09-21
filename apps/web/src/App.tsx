@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { LOCAL_SETTINGS_PAGE } from "@rakazo/contracts";
-import { Button, Skeleton } from "@rakazo/ui-web";
+import { BotAvatar, Button, Skeleton } from "@rakazo/ui-web";
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Navigate, Route, Routes, useSearchParams } from "react-router-dom";
 import { LoadingState } from "./components/ai/primitives";
@@ -36,6 +36,7 @@ export function App() {
 }
 
 function SessionApp() {
+  const { t } = useLingui();
   const [searchParams] = useSearchParams();
   const signInDestination =
     searchParams.get("next") === "/integrations/setup" ? "/integrations/setup" : "/app";
@@ -62,7 +63,10 @@ function SessionApp() {
         className="grid h-full place-items-center text-muted-foreground/80"
         data-rakazo-app-state="session-pending"
       >
-        <Trans>Loading…</Trans>
+        <LoadingState
+          indicator={<BotAvatar color="" size={64} expression="thinking" />}
+          label={t`Loading…`}
+        />
       </div>
     );
   }

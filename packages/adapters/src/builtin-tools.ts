@@ -780,7 +780,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "update_bot",
     description:
-      "Update this bot's own name (header and list label), title, description, avatar (profile picture or color/shape), or notifyOnFinish. Call this when the user asks you to rename yourself, change your title/description, change your profile picture, or turn finish notifications on or off. Do not claim you updated the profile without calling this tool.",
+      "Update this bot's name, title, description, eye color, or notifyOnFinish. Clave has a fixed orange droplet body; only the eyes can change color. Call this tool before claiming a profile change.",
     inputSchema: {
       type: "object",
       properties: {
@@ -799,17 +799,15 @@ export const builtinAgentTools: ConnectorTool[] = [
         color: {
           type: "string",
           description:
-            "Avatar color or encoded shape, e.g. #8B5CF6 or #8B5CF6::shape_3. Do not pass http URLs.",
+            "Eye color as hex or clave::eyes_#RRGGBB. The body remains orange. Do not pass URLs, images, or shape values.",
         },
         artifact_id: {
           type: "string",
-          description:
-            "Image artifact in this space to use as the profile picture. Prefer an image the user attached in this chat.",
+          description: "Deprecated. Image changes are rejected; customize the eye color instead.",
         },
         use_attached_image: {
           type: "boolean",
-          description:
-            "If true, use the latest image attached on this user message as the profile picture.",
+          description: "Deprecated. Image changes are rejected; customize the eye color instead.",
         },
         notifyOnFinish: {
           type: "boolean",

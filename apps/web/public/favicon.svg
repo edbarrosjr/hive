@@ -1,12 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
-  <title id="title">HIVE mark</title>
-  <defs>
-    <linearGradient id="blue" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#2965EC" />
-      <stop offset="1" stop-color="#5C89F8" />
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="148" fill="url(#blue)" />
-  <rect x="157" y="196" width="62" height="120" rx="31" fill="#F2F2F0" />
-  <rect x="293" y="196" width="62" height="120" rx="31" fill="#F2F2F0" />
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><title>Clave</title><g transform="translate(0 0) scale(1)"><path fill="#F97316" d="M119 28 Q129 20 139 28 C185 63 222 111 222 151 C222 204 183 234 129 234 C75 234 38 204 38 151 C38 110 76 63 119 28 Z"/><g fill="#141414"><rect x="85" y="113" width="32" height="69" rx="16"/><rect x="141" y="113" width="32" height="69" rx="16"/></g></g></svg>

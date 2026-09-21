@@ -10,6 +10,7 @@ export interface GroupAvatarMember {
 }
 
 export interface GroupAvatarProps {
+  animate?: boolean;
   members: GroupAvatarMember[];
   size?: number;
   className?: string;
@@ -19,6 +20,7 @@ export const GroupAvatar = memo(function GroupAvatar({
   members,
   size = 38,
   className,
+  animate = false,
 }: GroupAvatarProps) {
   const firstMember = members[0];
   if (!firstMember) {
@@ -53,6 +55,7 @@ export const GroupAvatar = memo(function GroupAvatar({
   if (members.length === 1) {
     return (
       <BotAvatar
+        animate={animate}
         color={firstMember.color}
         identity={firstMember.botId ?? firstMember.name}
         size={size}
@@ -92,6 +95,7 @@ export const GroupAvatar = memo(function GroupAvatar({
           }}
         >
           <BotAvatar
+            animate={animate}
             color={member.color}
             identity={member.botId ?? member.name}
             size={miniSize}

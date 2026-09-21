@@ -77,7 +77,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   const studio = page.getByTestId("avatar-studio");
   await expect(studio).toBeVisible();
   await expect(studio.getByTestId("avatar-studio-color")).toBeVisible();
-  await studio.getByRole("button", { name: "Color #EAB308" }).click();
+  await studio.getByRole("button", { name: "Eye color #312E81" }).click();
   await studio.getByRole("button", { name: "Done", exact: true }).click();
   await expect(studio).toBeHidden();
   await page.getByRole("button", { name: "Save", exact: true }).click();
@@ -93,7 +93,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   const settings = page.getByTestId("bot-settings");
   await settings.getByTestId("avatar-studio-trigger").click();
   await expect(studio).toBeVisible();
-  await expect(studio.getByRole("button", { name: "Color #EAB308" })).toHaveClass(/ring-2/);
+  await expect(studio.getByRole("button", { name: "Eye color #312E81" })).toHaveClass(/ring-2/);
   await studio.getByRole("button", { name: "Done", exact: true }).click();
   const modelSelect = settings.locator("label:has-text('Model') select");
   const teamComputer = settings.getByRole("button", { name: "Team" });

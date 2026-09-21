@@ -44,6 +44,8 @@ export type ColorTokens = {
   overlay: string;
   scrollbar: string;
   scrollbarHover: string;
+  mascotBody: string;
+  mascotEyes: string;
 };
 
 export const darkTokens = {
@@ -79,6 +81,8 @@ export const darkTokens = {
   overlay: "rgba(4, 4, 5, 0.72)",
   scrollbar: "#1E2026",
   scrollbarHover: "#2E313A",
+  mascotBody: "#F97316",
+  mascotEyes: "#141414",
 } as const satisfies ColorTokens;
 
 export const lightTokens = {
@@ -114,12 +118,24 @@ export const lightTokens = {
   overlay: "rgba(20, 20, 22, 0.45)",
   scrollbar: "#C8C8C4",
   scrollbarHover: "#A8A8A4",
+  mascotBody: "#F97316",
+  mascotEyes: "#141414",
 } as const satisfies ColorTokens;
 
 /** Dark palette. Prefer `tokensForAppearance` when theme-aware. */
 export const tokens = darkTokens;
 
 export const RADIUS = "0.75rem";
+
+/** Eye-only customization. The Clave body is fixed in both themes. */
+export const mascotEyeColors = [
+  darkTokens.mascotEyes,
+  "#FFFFFF",
+  "#312E81",
+  "#172554",
+  "#064E3B",
+  "#701A75",
+] as const;
 
 export const botColors = [
   "#3EC5A8",
