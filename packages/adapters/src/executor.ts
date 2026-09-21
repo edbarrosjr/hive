@@ -63,6 +63,7 @@ import {
   nextFence,
   planActionGate,
   promptInvokesSkill,
+  redactBlocks,
   redactSecrets,
   renderBotDirectory,
   resolveActionApprovalDetail,
@@ -1536,6 +1537,9 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const connectorSchemas = new Map(
           exposedConnectorTools.map((tool) => [tool.name, tool.inputSchema] as const),
         );
+        const connectorReadOnly = new Map(
+          exposedConnectorTools.map((tool) => [tool.name, tool.readOnly] as const),
+        );
         let approvalRulesPromise: Promise<ActionApprovalRule[]> | undefined;
         const loadApprovalRules = () => {
           approvalRulesPromise ??= deps.prisma.actionApprovalRule
@@ -1674,6 +1678,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             run,
             "bot",
             [{ kind: "text", text: narration }],
+            runSecrets,
             undefined,
             userProgressClientNonce(run.id, midTurnProgressCount++),
           );
@@ -1744,6 +1749,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           if (approvedReplay.args) connectorCall.args = approvedReplay.args;
           let catalogRemapped = false;
           let resolvedToolSchema: Record<string, unknown> | undefined;
+          let resolvedToolReadOnly: boolean | undefined;
           if (name.startsWith("cloud_agent_") && !validCloudAgentArgs(name, args)) {
             return {
               error: "Invalid cloud agent arguments. Raw environment variables are not supported.",
@@ -1761,6 +1767,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 args = resolved.call.args;
                 catalogRemapped = true;
                 resolvedToolSchema = resolved.tool.inputSchema;
+                resolvedToolReadOnly = resolved.tool.readOnly;
                 effectRequest = catalogApprovalRequest(
                   connectorCall.tool,
                   connectorCall.args,
@@ -1899,13 +1906,16 @@ export function createRunExecutor(deps: ExecutorDeps) {
             }
           }
           const viaConnector = !BUILTIN_AGENT_TOOL_NAMES.has(name);
+          // `name` is the inner tool once the catalog remapped it, so read the
+          // hint off the resolved target first and fall back to the direct map.
+          const toolIsReadOnly = resolvedToolReadOnly ?? connectorReadOnly.get(name);
           const requiresUnattendedApproval = unattendedTriggerToolRequiresApproval(
             run.trigger,
             name,
             viaConnector,
           );
           const requiresApprovalByDefault =
-            requiresUnattendedApproval || toolRequiresApproval(name, viaConnector);
+            requiresUnattendedApproval || toolRequiresApproval(name, viaConnector, toolIsReadOnly);
           const requiresMandatoryApproval =
             requiresUnattendedApproval || toolRequiresExplicitApproval(name);
           const connectorKind = connectorKindFromToolName(
@@ -2376,14 +2386,20 @@ export function createRunExecutor(deps: ExecutorDeps) {
               if (args.attach !== false && chartFits) {
                 // Live inline chart: the client re-renders the validated spec
                 // and the PNG stays on disk as the exportable copy.
-                await publishMessage(deps, run, "bot", [
-                  {
-                    kind: "chart",
-                    name: chartName,
-                    spec: chartSpec,
-                    data: chartRows,
-                  },
-                ]);
+                await publishMessage(
+                  deps,
+                  run,
+                  "bot",
+                  [
+                    {
+                      kind: "chart",
+                      name: chartName,
+                      spec: chartSpec,
+                      data: chartRows,
+                    },
+                  ],
+                  runSecrets,
+                );
                 attached = true;
               } else if (args.attach !== false && deps.artifacts) {
                 const result = await attachWorkspaceFileToThread(
@@ -2398,7 +2414,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                     operationId: executionId,
                   },
                 );
-                await publishMessage(deps, run, "bot", [result.block]);
+                await publishMessage(deps, run, "bot", [result.block], runSecrets);
                 attached = true;
               }
               return finish({ ok: true, path: outPath, attached });
@@ -2443,7 +2459,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                   operationId: executionId,
                 },
               );
-              await publishMessage(deps, run, "bot", [attached.block]);
+              await publishMessage(deps, run, "bot", [attached.block], runSecrets);
               return finish({ ok: true, artifactId: attached.artifactId, path: filePath });
             } catch (error) {
               return finish({
@@ -3192,15 +3208,21 @@ export function createRunExecutor(deps: ExecutorDeps) {
             if ("error" in spawned) return finish(spawned);
             if (!(await persistEffectResult(spawned))) return uncertainEffectResult(name);
             try {
-              await publishMessage(deps, run, "bot", [
-                {
-                  kind: "child_bot",
-                  botId: spawned.botId,
-                  name: spawned.name,
-                  title: spawned.title,
-                  status: "created",
-                },
-              ]);
+              await publishMessage(
+                deps,
+                run,
+                "bot",
+                [
+                  {
+                    kind: "child_bot",
+                    botId: spawned.botId,
+                    name: spawned.name,
+                    title: spawned.title,
+                    status: "created",
+                  },
+                ],
+                runSecrets,
+              );
               await deps.events.append({
                 spaceId: run.spaceId,
                 threadId: thread.id,
@@ -3309,6 +3331,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
               run,
               "bot",
               [{ kind: "text", text }],
+              runSecrets,
               undefined,
               userProgressClientNonce(run.id, midTurnProgressCount++),
             );
@@ -3409,14 +3432,20 @@ export function createRunExecutor(deps: ExecutorDeps) {
             if ("error" in archived) return finish(archived);
             if (!(await persistEffectResult(archived))) return uncertainEffectResult(name);
             try {
-              await publishMessage(deps, run, "bot", [
-                {
-                  kind: "child_bot",
-                  botId: archived.botId,
-                  name: archived.name,
-                  status: "archived",
-                },
-              ]);
+              await publishMessage(
+                deps,
+                run,
+                "bot",
+                [
+                  {
+                    kind: "child_bot",
+                    botId: archived.botId,
+                    name: archived.name,
+                    status: "archived",
+                  },
+                ],
+                runSecrets,
+              );
               await deps.events.append({
                 spaceId: run.spaceId,
                 threadId: thread.id,
@@ -3814,6 +3843,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                     run,
                     "bot",
                     [{ kind: "text", text: narration }],
+                    runSecrets,
                     undefined,
                     userProgressClientNonce(run.id, midTurnProgressCount++),
                   );
@@ -3824,9 +3854,13 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 hasStreamedText = false;
                 pendingProgress = "";
               }
-              await publishMessage(deps, run, "bot", [
-                { kind: "computer", state: "Needs you", text: safeReason },
-              ]);
+              await publishMessage(
+                deps,
+                run,
+                "bot",
+                [{ kind: "computer", state: "Needs you", text: safeReason }],
+                runSecrets,
+              );
               await workspaceCheckpoint.flush();
               if (!(await holdComputerExecutionLeaseForTakeover(deps.prisma, computerLease))) {
                 throw new Error("Computer lease expired before takeover");
@@ -3878,7 +3912,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 flushPendingTools();
                 if (!(await renewRunLease(deps, runId, workerId, fence))) return;
                 if (messageSegments.length > 0) {
-                  await publishMessage(deps, run, "bot", redactBlocks(messageSegments, runSecrets));
+                  await publishMessage(deps, run, "bot", messageSegments, runSecrets);
                 }
                 await workspaceCheckpoint.flush();
                 terminalCheckpointComplete = true;
@@ -3993,6 +4027,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                       result: safeResult,
                     },
                   ],
+                  runSecrets,
                   subagentMarksUnread(run.trigger, event.status),
                 );
               }
@@ -4648,28 +4683,25 @@ async function requeueComputerRun(
   });
 }
 
-function redactBlocks(blocks: MessageBlock[], secrets: string[]): MessageBlock[] {
-  return blocks.map((block) => {
-    if (block.kind === "text") {
-      return { kind: "text" as const, text: redactSecrets(block.text, secrets) };
-    }
-    if (block.kind === "bot_message_sent" || block.kind === "bot_message_received") {
-      return { ...block, text: redactSecrets(block.text, secrets) };
-    }
-    return block;
-  });
-}
-
+/**
+ * `secrets` is required rather than optional on purpose. Redaction used to sit
+ * at the one call site that had the run's secret list in scope, so every tool
+ * handler publishing a block of its own went around it. Taking the list here
+ * means the compiler, not a reviewer, is what catches the next handler that
+ * publishes without it.
+ */
 async function publishMessage(
   deps: ExecutorDeps,
   run: { id: string; spaceId: string; threadId: string; botId: string },
   role: "user" | "bot" | "system",
   blocks: MessageBlock[],
+  secrets: string[],
   markUnread?: boolean,
   clientNonce?: string,
 ) {
+  const safe = redactBlocks(blocks, secrets);
   const committed = await deps.prisma.$transaction((tx) =>
-    persistMessageInTransaction(tx, run, role, blocks, markUnread, clientNonce),
+    persistMessageInTransaction(tx, run, role, safe, markUnread, clientNonce),
   );
   await deps.events.notify(run.threadId, committed.eventSeq).catch((error) => {
     getLogger().error("thread message realtime notification", error);

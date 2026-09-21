@@ -182,6 +182,49 @@ describe("MCP connector session cache", () => {
     }
   });
 
+  it("carries the server read-only hint onto the discovered tool", async () => {
+    const state = {
+      failNext: false,
+      initializations: 0,
+      tools: [
+        {
+          name: "minhas_vendas",
+          inputSchema: { type: "object" },
+          annotations: { readOnlyHint: true },
+        },
+        {
+          name: "criar_venda",
+          inputSchema: { type: "object" },
+          annotations: { readOnlyHint: false },
+        },
+        { name: "anotar", inputSchema: { type: "object" } },
+      ],
+    };
+    vi.stubGlobal("fetch", mcpFetch(state));
+    const connector = new McpConnector(
+      {
+        botMcpServer: {
+          findMany: vi.fn().mockResolvedValue([ASSIGNMENT]),
+          findFirst: vi.fn().mockResolvedValue(ASSIGNMENT),
+        },
+      } as never,
+      {} as never,
+      { network: TEST_NETWORK },
+    );
+    const tools = await connector.discoverTools({
+      spaceId: "w1",
+      userId: "u1",
+      botId: "bot-1",
+      signal: new AbortController().signal,
+    } as never);
+    expect(tools.map((tool) => [tool.name, tool.readOnly])).toEqual([
+      ["mcp__demo__minhas_vendas", true],
+      ["mcp__demo__criar_venda", false],
+      ["mcp__demo__anotar", undefined],
+    ]);
+    await connector.close();
+  });
+
   it("returns no tools when the MCP catalog is empty", async () => {
     const connector = new McpConnector(
       { botMcpServer: { findMany: vi.fn().mockResolvedValue([]) } } as never,

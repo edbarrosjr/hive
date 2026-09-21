@@ -1825,6 +1825,52 @@ describe("mobile thread event reduction", () => {
     );
   });
 
+  // Until this, a message whose blocks all summarised to "" produced an empty
+  // string, and the bubble around it returned null — the content did not
+  // degrade, it disappeared. These five kinds all have real producers.
+  it("leaves a readable line for every kind the thread has no branch for", () => {
+    const cases: Array<[string, unknown, string]> = [
+      ["card", { kind: "card", lines: [{ k: "Etapa", v: "Credito" }] }, "Etapa: Credito"],
+      [
+        "choice",
+        { kind: "choice", question: "What should I focus on?", options: [], answerId: undefined },
+        "What should I focus on?",
+      ],
+      ["mcp_approval", { kind: "mcp_approval", name: "clave", serverId: "s-1" }, "clave"],
+      [
+        "skill_draft",
+        { kind: "skill_draft", name: "Weekly recap", skillId: "sk-1" },
+        "Weekly recap",
+      ],
+      ["connect", { kind: "connect", name: "Gmail", initial: "G", status: "pending" }, "Gmail"],
+    ];
+
+    for (const [label, block, expected] of cases) {
+      expect(
+        blockText(mobileMessage(`bubble-${label}`, [block as never])),
+        `${label} rendered nothing`,
+      ).toBe(expected);
+    }
+  });
+
+  it("shows which option was taken once a choice is answered", () => {
+    expect(
+      blockText(
+        mobileMessage("choice-answered", [
+          {
+            kind: "choice",
+            question: "What should I focus on?",
+            options: [
+              { id: "a", letter: "A", label: "Inbox" },
+              { id: "b", letter: "B", label: "Calendar" },
+            ],
+            answerId: "b",
+          },
+        ]),
+      ),
+    ).toBe("What should I focus on? — Calendar");
+  });
+
   it("formats channel messages with their platform attribution", () => {
     expect(
       blockText(
