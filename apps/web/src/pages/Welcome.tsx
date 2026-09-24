@@ -1,6 +1,6 @@
 import { Trans } from "@lingui/react/macro";
 import { BotAvatar } from "@rakazo/ui-web";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { WindowChrome } from "./WindowChrome";
 
 export function WelcomePage() {
@@ -29,6 +29,12 @@ export function WelcomePage() {
         >
           <Trans>Sign up</Trans>&nbsp;&nbsp;→
         </button>
+        <p className="app-no-drag -mt-4 text-[17px] text-muted-foreground">
+          <Trans>Already have an account?</Trans>{" "}
+          <Link to="/sign-in" className="font-medium text-foreground">
+            <Trans>Sign in</Trans>
+          </Link>
+        </p>
       </div>
     </div>
   );
