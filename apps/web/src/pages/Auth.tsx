@@ -1,19 +1,17 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { readBoundedJsonResponse, signupRequiresEmailVerification } from "@rakazo/core";
+import { signupRequiresEmailVerification } from "@rakazo/core";
 import { BotAvatar, Button, Input, Label } from "@rakazo/ui-web";
 import { Eye, EyeOff } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { authClient } from "../lib/auth";
+import { useAuthCapabilities } from "../lib/auth-capabilities";
 import { clearSpaceSelection } from "../lib/rpc";
 
 type AuthMode = "in" | "up" | "forgot";
-type PasswordResetCapabilities = { passwordReset: boolean; resetUrl: string | null };
 
 const fieldClass = "mt-2 h-12 rounded-xl px-4 text-base md:text-base";
 const submitClass = "mt-3 h-12 w-full rounded-xl text-base";
-const AUTH_CAPABILITIES_TIMEOUT_MS = 8_000;
-const MAX_AUTH_CAPABILITIES_RESPONSE_BYTES = 64 * 1024;
 
 export function AuthPage({ mode }: { mode: AuthMode }) {
   const { t } = useLingui();
@@ -28,7 +26,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
   const [resetSent, setResetSent] = useState(false);
   // Signup triggers a session refresh that remounts the anonymous auth page.
   const sent = resetSent || searchParams.get("verify") === "email";
-  const [reset, setReset] = useState<PasswordResetCapabilities | null>(null);
+  const reset = useAuthCapabilities();
   const passwordFieldId = mode === "in" ? "current-password" : "new-password";
   const title = sent ? (
     <Trans>Check your email</Trans>
@@ -40,31 +38,8 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
     <Trans>Reset your password</Trans>
   );
 
-  useEffect(() => {
-    if (mode === "up") return;
-    let active = true;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), AUTH_CAPABILITIES_TIMEOUT_MS);
-    void fetch("/api/auth/capabilities", { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Could not load authentication capabilities");
-        return readBoundedJsonResponse<PasswordResetCapabilities>(
-          response,
-          MAX_AUTH_CAPABILITIES_RESPONSE_BYTES,
-          controller.signal,
-        );
-      })
-      .then((capabilities) => {
-        if (active) setReset(capabilities);
-      })
-      .catch(() => undefined)
-      .finally(() => clearTimeout(timer));
-    return () => {
-      active = false;
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [mode]);
+  // Closed registration has no signup form to show.
+  if (mode === "up" && reset?.signups === false) return <Navigate to="/sign-in" replace />;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -217,12 +192,14 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
           </Button>
           <p className="mt-8 text-muted-foreground">
             {mode === "in" ? (
-              <>
-                <Trans>Don’t have an account?</Trans>{" "}
-                <Link to="/sign-up" className="font-medium text-foreground">
-                  <Trans>Sign up</Trans>
-                </Link>
-              </>
+              reset?.signups === false ? null : (
+                <>
+                  <Trans>Don’t have an account?</Trans>{" "}
+                  <Link to="/sign-up" className="font-medium text-foreground">
+                    <Trans>Sign up</Trans>
+                  </Link>
+                </>
+              )
             ) : mode === "up" ? (
               <>
                 <Trans>Already have an account?</Trans>{" "}

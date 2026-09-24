@@ -33,6 +33,16 @@ export function signupsOpen(enabled: string | undefined): boolean {
   return enabled !== "false" && enabled !== "0";
 }
 
+/**
+ * An explicit SIGNUPS_ENABLED pins the signup policy on every API start, so a
+ * deployment configured through its environment cannot drift from it. Unset
+ * (or empty, as compose passes an omitted variable) leaves the stored setting
+ * in charge after the first start seeds it.
+ */
+export function signupPolicyPinnedByEnv(signupsEnabled: string | undefined): boolean {
+  return signupsEnabled !== undefined && signupsEnabled.trim() !== "";
+}
+
 export function signupPolicyFromEnv(input: {
   signupsEnabled: string | undefined;
   signupAllowlist: string | undefined;

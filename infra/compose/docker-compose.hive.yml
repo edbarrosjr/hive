@@ -124,7 +124,9 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Defina BETTER_AUTH_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Defina ENCRYPTION_KEY}
       SCREEN_PROXY_SECRET: ${SCREEN_PROXY_SECRET:?Defina SCREEN_PROXY_SECRET}
-      SIGNUPS_ENABLED: ${SIGNUPS_ENABLED:-true}
+      # Cadastro fechado por padrao: a variavel vale em toda subida da API.
+      # Para criar a primeira conta, suba uma vez com SIGNUPS_ENABLED=true.
+      SIGNUPS_ENABLED: ${SIGNUPS_ENABLED:-false}
       SIGNUP_ALLOWLIST: ${SIGNUP_ALLOWLIST:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       # Opcionais: tambem da para conectar o modelo pela tela, depois de entrar.

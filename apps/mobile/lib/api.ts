@@ -418,16 +418,25 @@ export function signUp(email: string, password: string, name: string) {
   return authenticateWithEmail("sign-up", { email, password, name });
 }
 
-export type PasswordResetCapabilities = { passwordReset: boolean; resetUrl: string | null };
+export type AuthCapabilities = {
+  signups: boolean;
+  passwordReset: boolean;
+  resetUrl: string | null;
+};
 
-export async function passwordResetCapabilities(): Promise<PasswordResetCapabilities> {
-  const { response, body } = await fetchMobileJson<PasswordResetCapabilities>(
+export async function authCapabilities(): Promise<AuthCapabilities> {
+  const { response, body } = await fetchMobileJson<Partial<AuthCapabilities>>(
     `${currentApiBase()}/api/auth/capabilities`,
     { headers: { origin: "rakazo://" } },
-    { passwordReset: false, resetUrl: null },
+    {},
   );
-  if (!response.ok) throw new Error("Could not load password recovery settings");
-  return body;
+  if (!response.ok) throw new Error("Could not load authentication settings");
+  // Servers that predate the `signups` field keep registration open.
+  return {
+    signups: body.signups !== false,
+    passwordReset: body.passwordReset === true,
+    resetUrl: typeof body.resetUrl === "string" ? body.resetUrl : null,
+  };
 }
 
 export async function requestPasswordReset(email: string, redirectTo: string): Promise<void> {
