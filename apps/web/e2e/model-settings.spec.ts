@@ -243,7 +243,7 @@ test("model settings connect, replace, and cancel provider authentication", asyn
   await page.getByRole("button", { name: /Scripted/ }).click();
   await expect(page.getByRole("combobox", { name: "Model" })).toHaveText(/Scripted runtime/);
   const apiKeyInput = page.getByLabel("API key");
-  await expect(apiKeyInput).toHaveAttribute("autocomplete", "new-password");
+  await expect(apiKeyInput).toHaveAttribute("autocomplete", "off");
   await apiKeyInput.fill("fake-scripted-key-one");
   await page.getByRole("button", { name: "Connect API key" }).click();
   await expect(page.getByText(/Connected and using Scripted runtime/)).toBeVisible();

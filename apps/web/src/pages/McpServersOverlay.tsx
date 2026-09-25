@@ -19,6 +19,7 @@ import {
   FieldLabel,
   FieldTitle,
   Input,
+  SecretInput,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -353,9 +354,8 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
                       <FieldLabel htmlFor="mcp-secret">
                         <Trans>Access token (optional)</Trans>
                       </FieldLabel>
-                      <Input
+                      <SecretInput
                         id="mcp-secret"
-                        type="password"
                         value={secret}
                         onChange={(e) => setSecret(e.target.value)}
                         placeholder={t`Stored encrypted`}
@@ -368,9 +368,8 @@ export function McpServersOverlay({ onClose }: { onClose: () => void }) {
                           value={headerName}
                           onChange={(e) => setHeaderName(e.target.value)}
                         />
-                        <Input
+                        <SecretInput
                           aria-label={t`Header value`}
-                          type="password"
                           value={headerValue}
                           onChange={(e) => setHeaderValue(e.target.value)}
                           placeholder={t`Optional header value`}

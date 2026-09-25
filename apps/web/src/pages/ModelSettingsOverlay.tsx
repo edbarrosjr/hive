@@ -25,6 +25,7 @@ import {
   ModelThinkingOptions,
   NativeSelect,
   NativeSelectOption,
+  SecretInput,
 } from "@rakazo/ui-web";
 import { ChevronDown, X } from "lucide-react";
 import {
@@ -741,13 +742,11 @@ export function ModelSettingsOverlay({
                       <summary className="w-fit cursor-pointer select-none">
                         <Trans>API key</Trans>
                       </summary>
-                      <Input
+                      <SecretInput
                         aria-label={t`API key`}
                         value={apiKey}
                         onChange={(event) => updateApiKey(event.target.value)}
                         placeholder={t`Optional`}
-                        type="password"
-                        autoComplete="new-password"
                         className="mt-2 h-10 text-foreground"
                       />
                     </details>
@@ -763,13 +762,11 @@ export function ModelSettingsOverlay({
                       ) : (
                         <Trans>API key</Trans>
                       )}
-                      <Input
+                      <SecretInput
                         id="model-api-key"
                         value={apiKey}
                         onChange={(event) => updateApiKey(event.target.value)}
                         placeholder="sk-…"
-                        type="password"
-                        autoComplete="new-password"
                         className="mt-2 h-10 text-foreground"
                       />
                     </label>

@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { IntegrationCatalogResult, IntegrationSetupState } from "@rakazo/contracts";
-import { Button, Input } from "@rakazo/ui-web";
+import { Button, Input, SecretInput } from "@rakazo/ui-web";
 import { Check } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { connectMcpOauth } from "../../lib/mcp-connect";
@@ -192,13 +192,11 @@ export function IntegrationSetup({
               ) : null}
               <label htmlFor={`${fieldId}-key`} className="block text-sm">
                 {choice === "composio" ? t`API key` : t`Client secret`}
-                <Input
+                <SecretInput
                   id={`${fieldId}-key`}
                   className="mt-2"
-                  type="password"
                   value={apiKey}
                   onChange={(event) => setApiKey(event.target.value)}
-                  autoComplete="new-password"
                 />
               </label>
               <a
@@ -308,13 +306,11 @@ export function IntegrationSetup({
           </label>
           <label htmlFor={`${fieldId}-token`} className="block text-sm">
             <Trans>Access token</Trans>
-            <Input
+            <SecretInput
               id={`${fieldId}-token`}
               className="mt-2"
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
-              type="password"
-              autoComplete="new-password"
             />
           </label>
           <Button

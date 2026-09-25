@@ -1,5 +1,5 @@
 import { Trans } from "@lingui/react/macro";
-import { Button, Field, FieldLabel, Input, Toggle } from "@rakazo/ui-web";
+import { Button, Field, FieldLabel, Input, SecretInput, Toggle } from "@rakazo/ui-web";
 import { useId, useState } from "react";
 import type { MemoryProviderConnectionDraft, MemoryProviderSettingsFormProps } from "./registry";
 
@@ -60,14 +60,12 @@ export function SupermemorySettingsForm({ busy, onConnect }: MemoryProviderSetti
         <FieldLabel htmlFor={apiKeyId}>
           {mode === "cloud" ? <Trans>Organization API key</Trans> : <Trans>Instance API key</Trans>}
         </FieldLabel>
-        <Input
+        <SecretInput
           id={apiKeyId}
           value={apiKey}
           disabled={busy}
           onChange={(event) => setApiKey(event.target.value)}
           placeholder="sm_…"
-          type="password"
-          autoComplete="new-password"
         />
       </Field>
 

@@ -18,6 +18,7 @@ import {
   Button,
   Input,
   ModelThinkingOptions,
+  SecretInput,
   Select,
   SelectContent,
   SelectItem,
@@ -629,13 +630,11 @@ export function OnboardingPage() {
                   <summary className="w-fit cursor-pointer select-none">
                     <Trans>API key</Trans>
                   </summary>
-                  <Input
+                  <SecretInput
                     aria-label={t`API key`}
                     value={apiKey}
                     onChange={(e) => updateApiKey(e.target.value)}
                     placeholder={t`Optional`}
-                    type="password"
-                    autoComplete="new-password"
                     className="mt-2"
                   />
                 </details>
@@ -645,13 +644,11 @@ export function OnboardingPage() {
                   className="mt-4 block text-sm font-medium text-foreground"
                 >
                   {subscriptionSignIn ? <Trans>Or paste an API key</Trans> : <Trans>API key</Trans>}
-                  <Input
+                  <SecretInput
                     id={`${fieldId}-api-key`}
                     value={apiKey}
                     onChange={(e) => updateApiKey(e.target.value)}
                     placeholder="sk-…"
-                    type="password"
-                    autoComplete="new-password"
                     className="mt-2"
                   />
                 </label>

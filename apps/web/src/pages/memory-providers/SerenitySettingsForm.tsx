@@ -1,5 +1,5 @@
 import { Trans } from "@lingui/react/macro";
-import { Button, Field, FieldLabel, Input, Toggle } from "@rakazo/ui-web";
+import { Button, Field, FieldLabel, Input, SecretInput, Toggle } from "@rakazo/ui-web";
 import { useId, useState } from "react";
 import type { MemoryProviderConnectionDraft, MemoryProviderSettingsFormProps } from "./registry";
 
@@ -47,14 +47,12 @@ export function SerenitySettingsForm({ busy, onConnect }: MemoryProviderSettings
         <FieldLabel htmlFor={tokenId}>
           <Trans>Bearer token</Trans>
         </FieldLabel>
-        <Input
+        <SecretInput
           id={tokenId}
           value={token}
           disabled={busy}
           onChange={(event) => setToken(event.target.value)}
           placeholder="serenity…"
-          type="password"
-          autoComplete="new-password"
         />
       </Field>
 

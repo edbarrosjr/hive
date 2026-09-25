@@ -3,7 +3,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { ChatMarkdown } from "@rakazo/chat-ui/web";
 import type { ThreadMessage } from "@rakazo/contracts";
 import { isApprovalAskBlock, isSecretAskBlock, selectedAskActionLabel } from "@rakazo/core";
-import { Button, Input } from "@rakazo/ui-web";
+import { Button, Input, SecretInput } from "@rakazo/ui-web";
 import { useState } from "react";
 
 export type AskBlock = Extract<ThreadMessage["blocks"][number], { kind: "ask" }>;
@@ -143,11 +143,8 @@ export function AskCard({
             void submitAnswer(answer);
           }}
         >
-          <Input
+          <SecretInput
             aria-label={secretLabel}
-            type="password"
-            autoComplete="off"
-            spellCheck={false}
             disabled={submitting}
             value={answer}
             onChange={(event) => setAnswer(event.target.value)}

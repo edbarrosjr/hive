@@ -28,6 +28,7 @@ import {
   Input,
   NativeSelect,
   NativeSelectOption,
+  SecretInput,
 } from "@rakazo/ui-web";
 import { ChevronDown, ChevronLeft, ChevronUp, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -1057,9 +1058,7 @@ export function PluginsOverlay({
                         {sourceKind === "treg" ||
                         sourceKind === "executor" ||
                         authType !== "none" ? (
-                          <Input
-                            type="password"
-                            autoComplete="new-password"
+                          <SecretInput
                             value={credential}
                             onChange={(event) => setCredential(event.target.value)}
                             placeholder={

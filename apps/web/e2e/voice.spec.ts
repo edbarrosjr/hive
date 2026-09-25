@@ -32,7 +32,7 @@ test("voice settings connect a key, speak a reply, and open a call", async ({ pa
   await expect(page.getByTestId("voice-settings")).toBeVisible();
   await page.getByRole("button", { name: /Scripted/ }).click();
   const apiKeyInput = page.getByPlaceholder(/Paste your API key/);
-  await expect(apiKeyInput).toHaveAttribute("autocomplete", "new-password");
+  await expect(apiKeyInput).toHaveAttribute("autocomplete", "off");
   await apiKeyInput.fill("fake-scripted-voice-key");
   await page.getByRole("button", { name: "Connect", exact: true }).click();
   await expect(page.getByText("Connected", { exact: true }).first()).toBeVisible();

@@ -8,9 +8,9 @@ import {
   DialogTitle,
   Field,
   FieldLabel,
-  Input,
   NativeSelect,
   NativeSelectOption,
+  SecretInput,
 } from "@rakazo/ui-web";
 import { XIcon } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
@@ -246,10 +246,8 @@ export function VoiceSettingsOverlay({
                 <FieldLabel htmlFor={apiKeyId}>
                   <Trans>API key</Trans>
                 </FieldLabel>
-                <Input
+                <SecretInput
                   id={apiKeyId}
-                  type="password"
-                  autoComplete="new-password"
                   value={apiKey}
                   onChange={(event) => setApiKey(event.target.value)}
                   placeholder={credential ? t`Paste a replacement key` : t`Paste your API key`}
