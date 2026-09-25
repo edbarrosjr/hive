@@ -644,3 +644,7 @@ The optional marketing site in `apps/www` can be hosted separately.
 ## Connect mobile clients
 
 The iOS and Android app can also point at a self-hosted origin at runtime. On the sign-in screen, tap **Use a custom server** and enter the same HTTPS origin as `WEB_ORIGIN` (for example `https://app.example.com`). Store builds still default to `EXPO_PUBLIC_API_URL`; the in-app setting is an override for people running their own API. Changing the server signs the device out of any previous session.
+
+## Install the web app
+
+The web UI is a Progressive Web App. On a public HTTPS origin, browsers offer to install it (Chrome and Edge show an install option in the address bar; on iOS use Share → Add to Home Screen). The installed app opens in its own window under the same origin, so sign in once inside it. It registers a service worker only on production builds served over HTTPS, and the worker never intercepts `/api`, `/rpc` or screen streams.
