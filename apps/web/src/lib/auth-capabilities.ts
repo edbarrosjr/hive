@@ -36,7 +36,12 @@ export async function fetchAuthCapabilities(signal: AbortSignal): Promise<AuthCa
   );
 }
 
-/** `null` while loading; a failed lookup resolves to the open defaults. */
+/**
+ * `null` while loading; a failed lookup resolves to the open defaults.
+ * Unmounting drops the result instead of aborting the request: an abort
+ * surfaces as a failed request in the browser, and StrictMode's remount or a
+ * quick navigation would report one on every visit.
+ */
 export function useAuthCapabilities(): AuthCapabilities | null {
   const [capabilities, setCapabilities] = useState<AuthCapabilities | null>(null);
   useEffect(() => {
@@ -51,8 +56,6 @@ export function useAuthCapabilities(): AuthCapabilities | null {
       .finally(() => clearTimeout(timer));
     return () => {
       active = false;
-      clearTimeout(timer);
-      controller.abort();
     };
   }, []);
   return capabilities;
