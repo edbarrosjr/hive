@@ -33,7 +33,6 @@ import {
 } from "@rakazo/core";
 import * as Clipboard from "expo-clipboard";
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { useHeaderHeight } from "expo-router/react-navigation";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ActionSheetIOS,
@@ -65,6 +64,8 @@ import {
   type MarkdownArtifactPreviewTarget,
 } from "../components/markdown-artifact-preview";
 import { NativeSymbol } from "../components/native-symbol";
+import { ThreadHeader } from "../components/thread-header";
+import { TypingIndicator } from "../components/typing-indicator";
 import {
   applyMobileThreadEvent,
   blockText,
@@ -233,7 +234,6 @@ function Thread() {
   const { t } = useI18n();
   const navigation = useNavigation();
   const router = useRouter();
-  const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
   const keyboardVisible = useKeyboardState((state) => state.isVisible);
   const { botId, groupId, name, messageId } = useLocalSearchParams<{
@@ -533,92 +533,8 @@ function Thread() {
   }
 
   useLayoutEffect(() => {
-    navigation.setOptions({
-      title: displayName || t("Thread"),
-      headerTitle: () => (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={!inGroup && botId ? t("Chat settings") : displayName || t("Thread")}
-          disabled={inGroup || !botId}
-          onPress={() => {
-            if (!botId || inGroup) return;
-            router.push({ pathname: "/bot-settings", params: { botId } });
-          }}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 10,
-            maxWidth: 220,
-          }}
-        >
-          {!inGroup && currentBot ? (
-            <BotAvatar
-              color={currentBot.color}
-              identity={currentBot.id}
-              size={34}
-              status={currentBotStatus}
-              expression={
-                currentBotStatus === "running"
-                  ? "thinking"
-                  : completedMascotRun === snap?.run?.id
-                    ? "success"
-                    : undefined
-              }
-              muted={!currentBot.notifyOnFinish}
-            />
-          ) : null}
-          <Text
-            numberOfLines={1}
-            style={{ color: tokens.foreground, fontSize: 18, fontWeight: "600" }}
-          >
-            {displayName || t("Thread")}
-          </Text>
-        </Pressable>
-      ),
-      headerRight: () =>
-        inGroup ? (
-          <Pressable
-            accessibilityLabel={t("Group settings")}
-            hitSlop={8}
-            onPress={() =>
-              router.push({
-                pathname: "/group-settings",
-                params: { groupId: groupId ?? "" },
-              })
-            }
-          >
-            <NativeSymbol
-              ios="gearshape"
-              android="settings-outline"
-              size={21}
-              color={tokens.foreground}
-            />
-          </Pressable>
-        ) : (
-          <Pressable accessibilityLabel={t("Bot actions")} hitSlop={8} onPress={showBotActions}>
-            <NativeSymbol
-              ios="ellipsis"
-              android="ellipsis-horizontal"
-              size={21}
-              color={tokens.foreground}
-            />
-          </Pressable>
-        ),
-    });
-  }, [
-    botId,
-    currentBot,
-    currentBotStatus,
-    completedMascotRun,
-    displayName,
-    groupId,
-    inGroup,
-    navigation,
-    router,
-    t,
-    tokens,
-    colorScheme,
-  ]);
+    navigation.setOptions({ title: displayName || t("Thread") });
+  }, [displayName, navigation, t]);
 
   function leaveBot() {
     router.dismissAll();
@@ -1457,6 +1373,7 @@ function Thread() {
                 : "90%",
             flex: activityBotId ? 1 : undefined,
             flexShrink: 1,
+            marginBottom: messageReactions ? 14 : 0,
           }}
         >
           <Pressable accessible={false} onLongPress={actionProps.onLongPress}>
@@ -1480,11 +1397,11 @@ function Thread() {
           {messageReactions ? (
             <View
               style={{
+                position: "absolute",
+                bottom: -14,
+                ...(message.role === "user" ? { right: 6 } : { left: 6 }),
                 flexDirection: "row",
-                flexWrap: "wrap",
                 gap: 4,
-                marginTop: 4,
-                justifyContent: message.role === "user" ? "flex-end" : "flex-start",
               }}
             >
               {[...messageReactions].map(([emoji, count]) => (
@@ -1492,13 +1409,14 @@ function Thread() {
                   key={emoji}
                   style={{
                     color: tokens.foreground,
-                    backgroundColor: tokens.muted,
-                    borderColor: tokens.border,
-                    borderWidth: 1,
+                    backgroundColor: tokens.secondary,
+                    borderColor: tokens.background,
+                    borderWidth: 2,
                     borderRadius: 16,
-                    paddingHorizontal: 8,
-                    paddingVertical: 2,
-                    fontSize: 13,
+                    paddingHorizontal: 9,
+                    paddingVertical: 3,
+                    fontSize: 15,
+                    overflow: "hidden",
                   }}
                 >
                   {emoji}
@@ -1514,22 +1432,8 @@ function Thread() {
 
   const workingFooter =
     !inGroup && currentBot && isWorkingStatus(currentBotStatus) && !hasLiveProgress ? (
-      <View
-        accessibilityLabel={t("{name} is working", { name: currentBot.name })}
-        accessibilityRole="text"
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          minHeight: 40,
-          marginTop: 12,
-        }}
-      >
-        <BotAvatar
-          color={currentBot.color}
-          identity={currentBot.id}
-          size={28}
-          status={currentBotStatus}
-        />
+      <View style={{ marginTop: 12 }}>
+        <TypingIndicator accessibilityLabel={t("{name} is working", { name: currentBot.name })} />
       </View>
     ) : inGroup && workingGroupBots.length > 0 ? (
       <View
@@ -1541,12 +1445,12 @@ function Thread() {
         accessibilityRole="text"
         style={{
           flexDirection: "row",
-          alignItems: "center",
-          minHeight: 40,
+          alignItems: "flex-end",
+          gap: 8,
           marginTop: 12,
         }}
       >
-        <View style={{ flexDirection: "row", paddingRight: 8 }}>
+        <View style={{ flexDirection: "row" }}>
           {workingGroupBots.map((bot, index) => (
             <View
               key={bot.botId}
@@ -1559,6 +1463,7 @@ function Thread() {
             </View>
           ))}
         </View>
+        <TypingIndicator accessibilityLabel="" />
       </View>
     ) : null;
 
@@ -1582,9 +1487,75 @@ function Thread() {
   return (
     <KeyboardAvoidingView
       behavior="height"
-      keyboardVerticalOffset={headerHeight}
-      style={{ flex: 1, backgroundColor: tokens.background, paddingHorizontal: 20 }}
+      style={{ flex: 1, backgroundColor: tokens.background, paddingHorizontal: 16 }}
     >
+      <ThreadHeader
+        topInset={insets.top}
+        avatar={
+          inGroup ? (
+            <View style={{ flexDirection: "row" }}>
+              {(snap?.members ?? []).slice(0, 3).map((member, index) => (
+                <View
+                  key={member.botId}
+                  style={{ marginLeft: index === 0 ? 0 : -22, zIndex: 3 - index }}
+                >
+                  <BotAvatar
+                    color={member.color}
+                    identity={member.botId}
+                    size={64}
+                    status={workingGroupBots.find((bot) => bot.botId === member.botId)?.status}
+                  />
+                </View>
+              ))}
+            </View>
+          ) : currentBot ? (
+            <BotAvatar
+              color={currentBot.color}
+              identity={currentBot.id}
+              size={76}
+              status={currentBotStatus}
+              expression={
+                currentBotStatus === "running"
+                  ? "thinking"
+                  : completedMascotRun === snap?.run?.id
+                    ? "success"
+                    : undefined
+              }
+              muted={!currentBot.notifyOnFinish}
+            />
+          ) : (
+            <BotAvatar color="" size={76} animate={false} />
+          )
+        }
+        name={displayName || t("Thread")}
+        status={
+          inGroup
+            ? workingGroupBots.length > 1
+              ? t("{count} agents working", { count: workingGroupBots.length })
+              : workingGroupBots.length === 1
+                ? t("Working…")
+                : null
+            : isWorkingStatus(currentBotStatus)
+              ? t("Working…")
+              : null
+        }
+        menuLabel={t("Conversations")}
+        onMenu={leaveBot}
+        openLabel={inGroup ? t("Group settings") : t("Bot actions")}
+        onOpen={
+          inGroup
+            ? () => router.push({ pathname: "/group-settings", params: { groupId: groupId ?? "" } })
+            : botId
+              ? showBotActions
+              : undefined
+        }
+        actionLabel={t("Invite")}
+        onAction={() =>
+          inGroup
+            ? router.push({ pathname: "/group-settings", params: { groupId: groupId ?? "" } })
+            : router.push("/new-group")
+        }
+      />
       {error ? <Text style={{ color: tokens.mutedForeground, marginTop: 12 }}>{error}</Text> : null}
       {runError ? (
         <Text style={{ color: tokens.destructive, marginTop: 12 }}>{runError}</Text>
@@ -1902,25 +1873,10 @@ function Thread() {
           style={{
             flexDirection: "row",
             gap: 8,
-            marginTop: 16,
+            marginTop: 12,
             alignItems: "flex-end",
           }}
         >
-          <Pressable
-            accessibilityLabel={t("Attach file")}
-            onPress={showAttachMenu}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              borderWidth: 1,
-              borderColor: tokens.border,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <NativeSymbol ios="plus" android="add" size={18} color={tokens.mutedForeground} />
-          </Pressable>
           <View
             style={{
               flex: 1,
@@ -1928,13 +1884,28 @@ function Thread() {
               flexWrap: "wrap",
               alignItems: "center",
               gap: 6,
-              backgroundColor: tokens.card,
-              borderRadius: 20,
-              paddingHorizontal: 10,
-              paddingVertical: 8,
-              minHeight: 44,
+              backgroundColor: tokens.secondary,
+              borderRadius: 26,
+              paddingLeft: 6,
+              paddingRight: 16,
+              paddingVertical: 6,
+              minHeight: 52,
             }}
           >
+            <Pressable
+              accessibilityLabel={t("Attach file")}
+              onPress={showAttachMenu}
+              hitSlop={6}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <NativeSymbol ios="plus" android="add" size={22} color={tokens.foreground} />
+            </Pressable>
             {selectedSkill ? (
               <View
                 testID="skill-chip"
@@ -2049,34 +2020,59 @@ function Thread() {
                 flexShrink: 1,
                 minWidth: 96,
                 color: tokens.foreground,
-                paddingVertical: 2,
-                maxHeight: 100,
+                fontSize: 17,
+                paddingVertical: 4,
+                maxHeight: 120,
                 writingDirection: "auto",
               }}
             />
           </View>
-          <Pressable
-            accessibilityLabel={t("Send")}
-            disabled={sending || !canSend}
-            onPress={() => void send()}
-            style={{
-              backgroundColor: tokens.primary,
-              borderRadius: 22,
-              width: 44,
-              height: 44,
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: sending || !canSend ? 0.5 : 1,
-            }}
-          >
-            <NativeSymbol
-              ios="arrow.up"
-              android="arrow-up"
-              size={18}
-              color={tokens.primaryForeground}
-            />
-          </Pressable>
-          {working ? (
+          {working && !canSend ? (
+            <Pressable
+              accessibilityLabel={t("Stop")}
+              disabled={sending}
+              onPress={() => void stop()}
+              style={{
+                backgroundColor: tokens.chatUser,
+                borderRadius: 26,
+                width: 52,
+                height: 52,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: sending ? 0.5 : 1,
+              }}
+            >
+              <NativeSymbol
+                ios="stop.fill"
+                android="stop"
+                size={18}
+                color={tokens.chatUserForeground}
+              />
+            </Pressable>
+          ) : (
+            <Pressable
+              accessibilityLabel={t("Send")}
+              disabled={sending || !canSend}
+              onPress={() => void send()}
+              style={{
+                backgroundColor: tokens.chatUser,
+                borderRadius: 26,
+                width: 52,
+                height: 52,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: sending || !canSend ? 0.5 : 1,
+              }}
+            >
+              <NativeSymbol
+                ios="arrow.up"
+                android="arrow-up"
+                size={20}
+                color={tokens.chatUserForeground}
+              />
+            </Pressable>
+          )}
+          {working && canSend ? (
             <Pressable
               accessibilityLabel={t("Stop")}
               disabled={sending}
@@ -2084,15 +2080,15 @@ function Thread() {
               style={{
                 borderColor: tokens.border,
                 borderWidth: 1,
-                borderRadius: 22,
-                width: 44,
-                height: 44,
+                borderRadius: 26,
+                width: 52,
+                height: 52,
                 alignItems: "center",
                 justifyContent: "center",
                 opacity: sending ? 0.5 : 1,
               }}
             >
-              <NativeSymbol ios="stop.fill" android="stop" size={15} color={tokens.foreground} />
+              <NativeSymbol ios="stop.fill" android="stop" size={16} color={tokens.foreground} />
             </Pressable>
           ) : null}
         </View>
@@ -2728,11 +2724,9 @@ const MessageBubble = memo(function MessageBubble({
       <View
         style={{
           maxWidth: "100%",
-          borderRadius: 20,
-          borderWidth: 1,
-          borderColor: tokens.border,
-          backgroundColor: message.role === "user" ? tokens.secondary : tokens.muted,
-          paddingHorizontal: 14,
+          borderRadius: 22,
+          backgroundColor: message.role === "user" ? tokens.chatUser : tokens.secondary,
+          paddingHorizontal: 16,
           paddingVertical: 12,
           gap: 8,
         }}
@@ -2745,7 +2739,8 @@ const MessageBubble = memo(function MessageBubble({
         {replyPreview || (message.replyToMessageId && message.replyQuote) ? (
           <Text
             style={{
-              color: message.role === "user" ? tokens.secondaryForeground : tokens.mutedForeground,
+              color: message.role === "user" ? tokens.chatUserForeground : tokens.mutedForeground,
+              opacity: message.role === "user" ? 0.8 : 1,
               fontSize: 12.5,
             }}
             numberOfLines={2}
@@ -2760,7 +2755,7 @@ const MessageBubble = memo(function MessageBubble({
         {caption ? (
           <Text
             style={{
-              color: message.role === "user" ? tokens.secondaryForeground : tokens.foreground,
+              color: message.role === "user" ? tokens.chatUserForeground : tokens.foreground,
               fontSize: 15,
             }}
           >
@@ -2790,7 +2785,7 @@ const MessageBubble = memo(function MessageBubble({
             >
               <Text
                 style={{
-                  color: message.role === "user" ? tokens.secondaryForeground : tokens.foreground,
+                  color: message.role === "user" ? tokens.chatUserForeground : tokens.foreground,
                   fontSize: 15,
                 }}
               >
@@ -2825,7 +2820,7 @@ const MessageBubble = memo(function MessageBubble({
             >
               <Text
                 style={{
-                  color: message.role === "user" ? tokens.secondaryForeground : tokens.foreground,
+                  color: message.role === "user" ? tokens.chatUserForeground : tokens.foreground,
                   fontSize: 15,
                 }}
               >
@@ -2835,7 +2830,7 @@ const MessageBubble = memo(function MessageBubble({
                 <Text
                   style={{
                     color:
-                      message.role === "user" ? tokens.secondaryForeground : tokens.mutedForeground,
+                      message.role === "user" ? tokens.chatUserForeground : tokens.mutedForeground,
                     marginTop: 4,
                     fontSize: 13,
                   }}
@@ -2908,9 +2903,10 @@ function MessageTextCard({
         flexShrink: 1,
         minWidth: 0,
         maxWidth: "100%",
-        backgroundColor: message.role === "user" ? tokens.secondary : tokens.muted,
-        padding: 12,
-        borderRadius: 20,
+        backgroundColor: message.role === "user" ? tokens.chatUser : tokens.secondary,
+        paddingHorizontal: 16,
+        paddingVertical: 11,
+        borderRadius: 22,
       }}
     >
       {speaker ? (
@@ -2928,7 +2924,8 @@ function MessageTextCard({
       {replyPreview || (message.replyToMessageId && message.replyQuote) ? (
         <Text
           style={{
-            color: message.role === "user" ? tokens.secondaryForeground : tokens.mutedForeground,
+            color: message.role === "user" ? tokens.chatUserForeground : tokens.mutedForeground,
+            opacity: message.role === "user" ? 0.8 : 1,
             fontSize: 12.5,
             marginBottom: 6,
           }}
@@ -2942,7 +2939,7 @@ function MessageTextCard({
         </Text>
       ) : null}
       {message.role === "user" ? (
-        <Text style={{ color: tokens.secondaryForeground, fontSize: 15.5, lineHeight: 23 }}>
+        <Text style={{ color: tokens.chatUserForeground, fontSize: 17, lineHeight: 23 }}>
           {contentText}
         </Text>
       ) : (
