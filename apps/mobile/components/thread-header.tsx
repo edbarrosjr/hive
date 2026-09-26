@@ -4,9 +4,9 @@ import { useMobileTokens } from "../lib/native";
 import { NativeSymbol } from "./native-symbol";
 
 /**
- * Conversation header: a round menu button, the bot centered with its name and
- * live status underneath, and one action pill on the right. Replaces the native
- * navigation bar on thread screens.
+ * Conversation header: a round menu button and the bot centered with its name
+ * and live status underneath. Replaces the native navigation bar on thread
+ * screens.
  */
 export function ThreadHeader({
   avatar,
@@ -17,8 +17,6 @@ export function ThreadHeader({
   onMenu,
   openLabel,
   onOpen,
-  actionLabel,
-  onAction,
 }: {
   avatar: ReactNode;
   name: string;
@@ -28,20 +26,11 @@ export function ThreadHeader({
   onMenu: () => void;
   openLabel: string;
   onOpen?: () => void;
-  actionLabel: string;
-  onAction: () => void;
 }) {
   const tokens = useMobileTokens();
   return (
     <View style={{ paddingTop: topInset + 6, alignItems: "center" }}>
-      <View
-        style={{
-          width: "100%",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
+      <View style={{ width: "100%", flexDirection: "row", alignItems: "center" }}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={menuLabel}
@@ -62,23 +51,6 @@ export function ThreadHeader({
             size={22}
             color={tokens.foreground}
           />
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={actionLabel}
-          onPress={onAction}
-          style={{
-            height: 44,
-            paddingHorizontal: 18,
-            borderRadius: 22,
-            backgroundColor: tokens.secondary,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text style={{ color: tokens.foreground, fontSize: 17, fontWeight: "600" }}>
-            {actionLabel}
-          </Text>
         </Pressable>
       </View>
       <Pressable

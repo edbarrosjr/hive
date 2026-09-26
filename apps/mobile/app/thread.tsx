@@ -1549,12 +1549,6 @@ function Thread() {
               ? showBotActions
               : undefined
         }
-        actionLabel={t("Invite")}
-        onAction={() =>
-          inGroup
-            ? router.push({ pathname: "/group-settings", params: { groupId: groupId ?? "" } })
-            : router.push("/new-group")
-        }
       />
       {error ? <Text style={{ color: tokens.mutedForeground, marginTop: 12 }}>{error}</Text> : null}
       {runError ? (
