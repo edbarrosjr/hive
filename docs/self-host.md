@@ -120,9 +120,11 @@ WEB_ORIGIN=https://app.example.com
 API_URL=https://app.example.com
 ```
 
-Cookies and CORS follow those origins. `SIGNUPS_ENABLED` / `SIGNUP_ALLOWLIST` seed the signup
-policy when the API starts for the first time. They are not reapplied on restart, so configure them
-before that first start.
+Cookies and CORS follow those origins. When `SIGNUPS_ENABLED` is set, it and `SIGNUP_ALLOWLIST`
+are applied on every API start and the deployment's signup policy follows them. When it is unset,
+the stored policy stands: seeded from the environment on the first start (open by default) and
+changed afterwards through the owner's deployment settings. With registration closed, the app only
+offers sign-in; create the first account before closing it.
 
 With a nonempty signup allowlist, users—including existing accounts—must verify their email to sign
 in. Configure SMTP below before enabling an allowlist or upgrading an allowlisted deployment.
@@ -637,8 +639,7 @@ shared filesystem; an object-storage adapter is not available yet.
 
 Use the same HTTPS origin for the web app, `/api`, and `/rpc`. Preserve the authenticated screen
 proxy routes. Choose a [computer provider](#choosing-a-computer-provider) appropriate to the
-service's trust boundary, and configure `SIGNUPS_ENABLED` and `SIGNUP_ALLOWLIST` before the API's
-first start.
+service's trust boundary, and configure `SIGNUPS_ENABLED` and `SIGNUP_ALLOWLIST` for the API.
 The optional marketing site in `apps/www` can be hosted separately.
 
 ## Connect mobile clients

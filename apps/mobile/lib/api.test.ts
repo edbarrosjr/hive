@@ -7,6 +7,7 @@ import type { MobileMessage, MobileSnapshot } from "./api.js";
 import {
   adoptDeletedSpaceFallback,
   applyMobileThreadEvent,
+  authCapabilities,
   authHeaders,
   blockText,
   changePassword,
@@ -16,7 +17,6 @@ import {
   MAX_MOBILE_AUTH_RESPONSE_BYTES,
   MAX_MOBILE_RPC_RESPONSE_BYTES,
   mergeMobileSnapshot,
-  passwordResetCapabilities,
   prependMobileMessagePage,
   requestPasswordReset,
   resetApiBase,
@@ -112,7 +112,8 @@ describe("mobile API authentication", () => {
       .mockResolvedValueOnce(jsonResponse({ status: true }));
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(passwordResetCapabilities()).resolves.toEqual({
+    await expect(authCapabilities()).resolves.toEqual({
+      signups: true,
       passwordReset: true,
       resetUrl: "https://rakazo.test/reset-password",
     });
@@ -137,10 +138,20 @@ describe("mobile API authentication", () => {
       vi.fn(async () => new Response("not-json", { status: 200 })),
     );
 
-    await expect(passwordResetCapabilities()).resolves.toEqual({
+    await expect(authCapabilities()).resolves.toEqual({
+      signups: true,
       passwordReset: false,
       resetUrl: null,
     });
+  });
+
+  it("reports closed registration so the sign-in screen can hide signup", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse({ signups: false, passwordReset: false, resetUrl: null })),
+    );
+
+    await expect(authCapabilities()).resolves.toMatchObject({ signups: false });
   });
 
   it("changes a password with the bearer session and revokes other sessions", async () => {

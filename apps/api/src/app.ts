@@ -63,8 +63,8 @@ import {
   SpaceMemoryProviderResolver,
   toTeamChatInbound,
 } from "@rakazo/adapters";
-import { blockedAuthPaths, createAuth } from "@rakazo/auth";
-import { signupPolicyFromEnv } from "@rakazo/core";
+import { blockedAuthPaths, createAuth, resolveSignupPolicy } from "@rakazo/auth";
+import { signupPolicyFromEnv, signupPolicyPinnedByEnv } from "@rakazo/core";
 import type { Pool, PrismaClient } from "@rakazo/db";
 import {
   createDb,
@@ -172,15 +172,17 @@ export async function createApp(
     runSecretWriter: createRunSecretWriter(secrets),
   });
   const environmentSignupPolicy = signupPolicyFromEnv(env);
+  const storedSignupPolicy = {
+    signupsEnabled: environmentSignupPolicy.enabled,
+    signupAllowlist: environmentSignupPolicy.allowlist.join(","),
+    signupPolicyInitialized: true,
+  };
   const deploymentSettings = await prisma.deploymentSettings.upsert({
     where: { id: "default" },
-    create: {
-      id: "default",
-      signupsEnabled: environmentSignupPolicy.enabled,
-      signupAllowlist: environmentSignupPolicy.allowlist.join(","),
-      signupPolicyInitialized: true,
-    },
-    update: {},
+    create: { id: "default", ...storedSignupPolicy },
+    // An explicit SIGNUPS_ENABLED is the deployment's source of truth, so it
+    // is reapplied on every start; otherwise the stored setting stands.
+    update: signupPolicyPinnedByEnv(env.signupsEnabled) ? storedSignupPolicy : {},
   });
   if (!deploymentSettings.signupPolicyInitialized) {
     // Older versions created this row with schema defaults even though auth
@@ -480,12 +482,14 @@ export async function createApp(
       credentials: true,
     }),
   );
-  app.get("/api/auth/capabilities", (c) =>
-    c.json({
+  app.get("/api/auth/capabilities", async (c) => {
+    const signupPolicy = await resolveSignupPolicy(prisma, env);
+    return c.json({
+      signups: signupPolicy.enabled,
       passwordReset: Boolean(email),
       resetUrl: email ? new URL("/reset-password", env.webOrigin).href : null,
-    }),
-  );
+    });
+  });
   if (localEmailEmulator && env.nodeEnv === "development") {
     app.get(
       "/api/dev/emails",

@@ -1,10 +1,15 @@
 import { Trans } from "@lingui/react/macro";
 import { BotAvatar } from "@rakazo/ui-web";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuthCapabilities } from "../lib/auth-capabilities";
 import { WindowChrome } from "./WindowChrome";
+
+const ctaClass =
+  "app-no-drag rounded-full bg-accent px-[34px] py-[15px] text-[19px] text-foreground transition hover:scale-[1.04] hover:bg-accent";
 
 export function WelcomePage() {
   const navigate = useNavigate();
+  const capabilities = useAuthCapabilities();
   return (
     <div className="flex min-h-full flex-col bg-background" data-rakazo-surface="welcome">
       <div className="app-drag flex gap-2 px-5 py-[18px]">
@@ -22,13 +27,25 @@ export function WelcomePage() {
             that you can give real work to.
           </Trans>
         </p>
-        <button
-          type="button"
-          onClick={() => navigate("/sign-up")}
-          className="app-no-drag rounded-full bg-accent px-[34px] py-[15px] text-[19px] text-foreground transition hover:scale-[1.04] hover:bg-accent"
-        >
-          <Trans>Sign up</Trans>&nbsp;&nbsp;→
-        </button>
+        {capabilities === null ? (
+          <div className="h-[57px]" aria-hidden="true" />
+        ) : capabilities.signups ? (
+          <>
+            <button type="button" onClick={() => navigate("/sign-up")} className={ctaClass}>
+              <Trans>Sign up</Trans>&nbsp;&nbsp;→
+            </button>
+            <p className="app-no-drag -mt-4 text-[17px] text-muted-foreground">
+              <Trans>Already have an account?</Trans>{" "}
+              <Link to="/sign-in" className="font-medium text-foreground">
+                <Trans>Sign in</Trans>
+              </Link>
+            </p>
+          </>
+        ) : (
+          <button type="button" onClick={() => navigate("/sign-in")} className={ctaClass}>
+            <Trans>Sign in</Trans>&nbsp;&nbsp;→
+          </button>
+        )}
       </div>
     </div>
   );

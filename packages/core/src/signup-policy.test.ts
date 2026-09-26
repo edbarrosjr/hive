@@ -3,6 +3,7 @@ import {
   emailAllowed,
   parseAllowlist,
   signupPolicyFromEnv,
+  signupPolicyPinnedByEnv,
   signupRequiresEmailVerification,
   signupsOpen,
 } from "./signup-policy.js";
@@ -35,6 +36,14 @@ describe("signup policy", () => {
   it("honors SIGNUPS_ENABLED", () => {
     expect(signupsOpen(undefined)).toBe(true);
     expect(signupsOpen("false")).toBe(false);
+  });
+
+  it("pins the policy only when SIGNUPS_ENABLED is explicitly set", () => {
+    expect(signupPolicyPinnedByEnv("false")).toBe(true);
+    expect(signupPolicyPinnedByEnv("true")).toBe(true);
+    expect(signupPolicyPinnedByEnv(undefined)).toBe(false);
+    expect(signupPolicyPinnedByEnv("")).toBe(false);
+    expect(signupPolicyPinnedByEnv("  ")).toBe(false);
   });
 
   it("builds a normalized policy from environment defaults", () => {

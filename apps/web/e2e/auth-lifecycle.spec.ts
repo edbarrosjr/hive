@@ -80,6 +80,10 @@ test("logout protects bot deep links and sign-in restores the session", async ({
   await expect(page).toHaveURL(/\/sign-up$/);
   await expect(page.getByRole("heading", { name: "Create your HIVE" })).toBeVisible();
   await page.goto("/");
+  await page.getByRole("link", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/sign-in$/);
+  await expect(page.getByRole("heading", { name: "Sign in to HIVE" })).toBeVisible();
+  await page.goto("/");
   await captureScreenshot(page, testInfo, "37-logged-out-welcome");
 
   await page.goto(protectedBotPath);

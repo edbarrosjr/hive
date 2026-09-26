@@ -16,14 +16,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
+  type AuthCapabilities,
   apiBaseWarning,
+  authCapabilities,
   currentApiBase,
   defaultApiBase,
   displayApiHost,
   loadSessionToken,
   normalizeApiBase,
-  type PasswordResetCapabilities,
-  passwordResetCapabilities,
   probeApiBase,
   requestPasswordReset,
   resetApiBase,
@@ -33,7 +33,7 @@ import {
   signUp,
   usesCustomApiBase,
 } from "../lib/api";
-import { type AuthMode, initialAuthMode } from "../lib/auth-routing";
+import { type AuthMode, authModeForPolicy, initialAuthMode } from "../lib/auth-routing";
 import { useI18n } from "../lib/i18n";
 import { useMobileTokens } from "../lib/native";
 
@@ -52,7 +52,8 @@ export default function SignIn() {
   const [hasSession, setHasSession] = useState(false);
   const [apiBase, setApiBase] = useState(() => currentApiBase());
   const [serverOpen, setServerOpen] = useState(false);
-  const [reset, setReset] = useState<PasswordResetCapabilities | null>(null);
+  const [reset, setReset] = useState<AuthCapabilities | null>(null);
+  const signupsOpen = reset?.signups !== false;
   const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
@@ -65,9 +66,11 @@ export default function SignIn() {
   useEffect(() => {
     let active = true;
     setReset(null);
-    void passwordResetCapabilities()
+    void authCapabilities()
       .then((capabilities) => {
-        if (active) setReset(capabilities);
+        if (!active) return;
+        setReset(capabilities);
+        setMode((current) => authModeForPolicy(current, capabilities.signups));
       })
       .catch(() => undefined);
     return () => {
@@ -278,39 +281,41 @@ export default function SignIn() {
                       </Text>
                     </Pressable>
                   ) : null}
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      marginTop: 24,
-                    }}
-                  >
-                    <Text style={{ color: tokens.mutedForeground, fontSize: 15 }}>
-                      {mode === "in"
-                        ? t("Don’t have an account?")
-                        : mode === "up"
-                          ? t("Already have an account?")
-                          : ""}
-                    </Text>
-                    <Pressable
-                      accessibilityRole="button"
-                      hitSlop={8}
-                      onPress={() => {
-                        setMode((current) => (current === "in" ? "up" : "in"));
-                        setError(null);
+                  {mode === "in" && !signupsOpen ? null : (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        marginTop: 24,
                       }}
-                      style={{ marginLeft: 5 }}
                     >
-                      <Text style={{ color: tokens.foreground, fontSize: 15, fontWeight: "600" }}>
+                      <Text style={{ color: tokens.mutedForeground, fontSize: 15 }}>
                         {mode === "in"
-                          ? t("Sign up")
+                          ? t("Don’t have an account?")
                           : mode === "up"
-                            ? t("Sign in")
-                            : t("Back to sign in")}
+                            ? t("Already have an account?")
+                            : ""}
                       </Text>
-                    </Pressable>
-                  </View>
+                      <Pressable
+                        accessibilityRole="button"
+                        hitSlop={8}
+                        onPress={() => {
+                          setMode((current) => (current === "in" ? "up" : "in"));
+                          setError(null);
+                        }}
+                        style={{ marginLeft: 5 }}
+                      >
+                        <Text style={{ color: tokens.foreground, fontSize: 15, fontWeight: "600" }}>
+                          {mode === "in"
+                            ? t("Sign up")
+                            : mode === "up"
+                              ? t("Sign in")
+                              : t("Back to sign in")}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  )}
                 </>
               )}
             </ScrollView>
