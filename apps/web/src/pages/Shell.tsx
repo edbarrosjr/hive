@@ -3244,7 +3244,7 @@ export function ShellPage() {
           {/* Phone: content scrolling beneath the floating header fades out instead of clashing with it. */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[150px] bg-linear-to-b from-background from-45% to-transparent md:hidden"
+            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[76px] bg-linear-to-b from-background/90 from-75% to-transparent md:hidden"
           />
           <div className="flex min-w-0 items-center gap-2">
             {/* Collapsed bots sidebar: this header is the leading edge for window chrome. */}
@@ -3295,7 +3295,7 @@ export function ShellPage() {
                   }
                 />
               ) : null}
-              <span className="flex min-w-0 max-w-full flex-col md:items-start max-md:items-center max-md:rounded-[18px] max-md:bg-secondary max-md:px-4 max-md:py-1.5">
+              <span className="flex min-w-0 max-w-full flex-col md:items-start max-md:items-center max-md:rounded-[18px] max-md:bg-floating max-md:px-4 max-md:py-1.5 max-md:backdrop-blur-xl">
                 <span
                   className="block max-w-full truncate text-[16px] font-medium text-foreground max-md:text-[16px] max-md:font-semibold"
                   dir="auto"
