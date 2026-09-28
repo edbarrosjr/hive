@@ -39,6 +39,7 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-overlay: var(--overlay);
+  --color-floating: var(--floating);
   --color-scrollbar: var(--scrollbar);
   --color-scrollbar-hover: var(--scrollbar-hover);
   --radius-sm: calc(var(--radius) - 4px);

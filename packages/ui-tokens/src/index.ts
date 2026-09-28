@@ -45,6 +45,8 @@ export type ColorTokens = {
   success: string;
   warning: string;
   overlay: string;
+  /** Translucent fill that takes on the hue of content scrolling beneath it. */
+  floating: string;
   scrollbar: string;
   scrollbarHover: string;
   mascotBody: string;
@@ -84,6 +86,7 @@ export const darkTokens = {
   success: "#4ECB71",
   warning: "#E9C46A",
   overlay: "rgba(4, 4, 5, 0.72)",
+  floating: "rgba(40, 41, 48, 0.4)",
   scrollbar: "#1E2026",
   scrollbarHover: "#2E313A",
   mascotBody: "#F97316",
@@ -123,6 +126,7 @@ export const lightTokens = {
   success: "#228B3B",
   warning: "#B7791F",
   overlay: "rgba(20, 20, 22, 0.45)",
+  floating: "rgba(225, 225, 220, 0.4)",
   scrollbar: "#C8C8C4",
   scrollbarHover: "#A8A8A4",
   mascotBody: "#F97316",

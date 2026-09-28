@@ -3295,7 +3295,7 @@ export function ShellPage() {
                   }
                 />
               ) : null}
-              <span className="flex min-w-0 max-w-full flex-col md:items-start max-md:items-center max-md:rounded-[18px] max-md:bg-secondary max-md:px-4 max-md:py-1.5">
+              <span className="flex min-w-0 max-w-full flex-col md:items-start max-md:items-center max-md:rounded-[18px] max-md:bg-floating max-md:px-4 max-md:py-1.5 max-md:backdrop-blur-xl">
                 <span
                   className="block max-w-full truncate text-[16px] font-medium text-foreground max-md:text-[16px] max-md:font-semibold"
                   dir="auto"
