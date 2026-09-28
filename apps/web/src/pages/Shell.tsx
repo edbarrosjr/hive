@@ -3244,7 +3244,7 @@ export function ShellPage() {
           {/* Phone: content scrolling beneath the floating header fades out instead of clashing with it. */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[150px] bg-linear-to-b from-background from-45% to-transparent md:hidden"
+            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[76px] bg-linear-to-b from-background/90 from-75% to-transparent md:hidden"
           />
           <div className="flex min-w-0 items-center gap-2">
             {/* Collapsed bots sidebar: this header is the leading edge for window chrome. */}
