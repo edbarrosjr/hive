@@ -3241,6 +3241,11 @@ export function ShellPage() {
       >
         {/* Phone: the header floats over the transcript, which scrolls beneath it. */}
         <div className="app-drag relative flex items-center justify-between px-3 py-[17px] max-md:pointer-events-none max-md:absolute max-md:inset-x-0 max-md:top-0 max-md:z-30 max-md:items-start max-md:pt-3 md:border-b md:border-sidebar-border md:px-[22px]">
+          {/* Phone: content scrolling beneath the floating header fades out instead of clashing with it. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[150px] bg-linear-to-b from-background from-45% to-transparent md:hidden"
+          />
           <div className="flex min-w-0 items-center gap-2">
             {/* Collapsed bots sidebar: this header is the leading edge for window chrome. */}
             {botsSidebarCollapsed && desktopBridge() ? <WindowChrome /> : null}
@@ -3248,7 +3253,7 @@ export function ShellPage() {
               type="button"
               aria-label={t`Open navigation`}
               onClick={() => setMobileSidebarOpen(true)}
-              className="app-no-drag pointer-events-auto grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-foreground shadow-sm hover:bg-accent md:hidden"
+              className="app-no-drag pointer-events-auto grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-foreground hover:bg-accent md:hidden"
             >
               <Menu size={21} strokeWidth={1.8} />
             </button>
@@ -3290,7 +3295,7 @@ export function ShellPage() {
                   }
                 />
               ) : null}
-              <span className="flex min-w-0 max-w-full flex-col md:items-start max-md:items-center max-md:rounded-[18px] max-md:bg-secondary max-md:px-4 max-md:py-1.5 max-md:shadow-sm">
+              <span className="flex min-w-0 max-w-full flex-col md:items-start max-md:items-center max-md:rounded-[18px] max-md:bg-secondary max-md:px-4 max-md:py-1.5">
                 <span
                   className="block max-w-full truncate text-[16px] font-medium text-foreground max-md:text-[16px] max-md:font-semibold"
                   dir="auto"
@@ -3321,7 +3326,7 @@ export function ShellPage() {
                   }
                 }}
                 data-active={panel === "computer" ? "" : undefined}
-                className="app-no-drag grid h-[30px] w-[34px] place-items-center rounded-[9px] hover:bg-accent data-active:bg-accent max-md:pointer-events-auto max-md:size-11 max-md:rounded-full max-md:bg-secondary max-md:shadow-sm"
+                className="app-no-drag grid h-[30px] w-[34px] place-items-center rounded-[9px] hover:bg-accent data-active:bg-accent max-md:pointer-events-auto max-md:size-11 max-md:rounded-full max-md:bg-secondary"
               >
                 <Monitor size={18} strokeWidth={1.6} className="text-foreground/75" />
               </button>
@@ -4459,6 +4464,10 @@ const Transcript = memo(function Transcript({
     workingBotName != null && workingBotName !== ""
       ? t`${workingBotName} is working`
       : t`Bots are working`;
+  const phone = usePhoneLayout();
+  // Phone: a tapped message shows its actions above the bubble instead of beside it.
+  const [revealedMessageId, setRevealedMessageId] = useState<string | null>(null);
+  const tapOrigin = useRef<{ x: number; y: number } | null>(null);
   const [quoteDraft, setQuoteDraft] = useState<{
     message: ThreadMessage;
     text: string;
@@ -4589,7 +4598,24 @@ const Transcript = memo(function Transcript({
       <div
         ref={scrollRef}
         data-testid="transcript"
+        onPointerUp={(event) => {
+          const origin = tapOrigin.current;
+          tapOrigin.current = null;
+          // Only a touch tap reveals actions: a drag is a scroll, a mouse has hover.
+          if (!phone || event.pointerType !== "touch" || !origin) return;
+          if (Math.abs(event.clientX - origin.x) > 10 || Math.abs(event.clientY - origin.y) > 10)
+            return;
+          const target = event.target as HTMLElement;
+          if (target.closest("a, button, input, textarea, select, [role='menuitem']")) return;
+          if (window.getSelection()?.toString()) return;
+          const id = target.closest<HTMLElement>("[data-message-id]")?.dataset.messageId ?? null;
+          setRevealedMessageId((current) => (id && current !== id ? id : null));
+        }}
+        onPointerCancel={() => {
+          tapOrigin.current = null;
+        }}
         onPointerDown={(event) => {
+          tapOrigin.current = { x: event.clientX, y: event.clientY };
           lastScrollTop.current = event.currentTarget.scrollTop;
           autoScrolling.current = false;
           following.current = false;
@@ -4686,8 +4712,8 @@ const Transcript = memo(function Transcript({
                       ? undefined
                       : `relative w-fit min-w-0 ${
                           message.role === "user"
-                            ? "max-w-[min(70%,calc(100%_-_6rem))]"
-                            : "max-w-[min(74%,calc(100%_-_6rem))]"
+                            ? "max-w-[min(70%,calc(100%_-_6rem))] max-md:max-w-[80%]"
+                            : "max-w-[min(74%,calc(100%_-_6rem))] max-md:max-w-[92%]"
                         }`
                   }
                 >
@@ -4695,6 +4721,7 @@ const Transcript = memo(function Transcript({
                     <MessageHoverActions
                       message={message}
                       side={message.role === "user" ? "start" : "end"}
+                      revealed={revealedMessageId === message.id}
                       onReply={onReply}
                       onReact={onReact}
                     />
@@ -5507,7 +5534,7 @@ const Composer = memo(function Composer({
               aria-label={t`Send`}
               disabled={sending || !canSend || disabled}
               onClick={send}
-              className="size-8 rounded-full bg-white text-black hover:bg-white/90 shadow-sm transition-transform active:scale-95 max-md:size-9 max-md:bg-chat-user max-md:text-chat-user-foreground max-md:hover:bg-chat-user/90"
+              className="size-8 rounded-full bg-white text-black hover:bg-white/90 shadow-sm transition-transform active:scale-95 max-md:size-9 max-md:bg-chat-user max-md:text-chat-user-foreground max-md:shadow-none max-md:hover:bg-chat-user/90"
             >
               <ArrowUp size={16} strokeWidth={2.2} />
             </Button>
@@ -5517,7 +5544,7 @@ const Composer = memo(function Composer({
               aria-label={t`Stop`}
               disabled={sending}
               onClick={() => void onStop()}
-              className="size-8 rounded-full border border-border bg-muted text-foreground/80 shadow-sm transition-colors hover:bg-accent hover:text-foreground max-md:size-9 max-md:border-0 max-md:bg-chat-user max-md:text-chat-user-foreground"
+              className="size-8 rounded-full border border-border bg-muted text-foreground/80 shadow-sm transition-colors hover:bg-accent hover:text-foreground max-md:size-9 max-md:border-0 max-md:bg-chat-user max-md:text-chat-user-foreground max-md:shadow-none"
             >
               <Square size={11} strokeWidth={0} fill="currentColor" />
             </Button>
@@ -5528,7 +5555,7 @@ const Composer = memo(function Composer({
             aria-label={t`Send`}
             disabled={sending || !canSend || disabled}
             onClick={send}
-            className="size-8 shrink-0 rounded-full bg-white text-black hover:bg-white/90 shadow-sm transition-transform active:scale-95 disabled:bg-white/10 disabled:text-muted-foreground/30 disabled:shadow-none max-md:size-9 max-md:bg-chat-user max-md:text-chat-user-foreground max-md:hover:bg-chat-user/90 max-md:disabled:bg-chat-user max-md:disabled:text-chat-user-foreground max-md:disabled:opacity-40"
+            className="size-8 shrink-0 rounded-full bg-white text-black hover:bg-white/90 shadow-sm transition-transform active:scale-95 disabled:bg-white/10 disabled:text-muted-foreground/30 disabled:shadow-none max-md:size-9 max-md:bg-chat-user max-md:text-chat-user-foreground max-md:shadow-none max-md:hover:bg-chat-user/90 max-md:disabled:bg-chat-user max-md:disabled:text-chat-user-foreground max-md:disabled:opacity-40"
           >
             <ArrowUp size={16} strokeWidth={2.2} />
           </Button>
@@ -5637,11 +5664,13 @@ function formatRosterTime(isoDate?: string | null): string {
 function MessageHoverActions({
   message,
   side,
+  revealed = false,
   onReply,
   onReact,
 }: {
   message: ThreadMessage;
   side: "start" | "end";
+  revealed?: boolean;
   onReply: (message: ThreadMessage) => void;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
 }) {
@@ -5662,7 +5691,7 @@ function MessageHoverActions({
     "grid h-7 w-7 place-items-center text-muted-foreground transition-colors hover:text-foreground";
 
   return (
-    <MessageHoverMetadata pinned={moreOpen || reactionsOpen} side={side}>
+    <MessageHoverMetadata pinned={moreOpen || reactionsOpen} revealed={revealed} side={side}>
       <div data-testid="message-hover-actions" className="flex items-center gap-0.5">
         {canReactToThreadMessage(message) ? (
           <Popover open={reactionsOpen} onOpenChange={setReactionsOpen}>

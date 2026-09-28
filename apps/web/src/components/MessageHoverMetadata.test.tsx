@@ -37,6 +37,28 @@ describe("MessageHoverMetadata", () => {
     expect(html).not.toContain("<time");
   });
 
+  it("moves the rail above the bubble and hides it at phone width until the message is tapped", () => {
+    const html = renderToStaticMarkup(
+      <MessageHoverMetadata side="end">
+        <div data-testid="message-actions" />
+      </MessageHoverMetadata>,
+    );
+
+    expect(html).toContain("max-md:bottom-full");
+    expect(html).toContain("max-md:start-0");
+    expect(html).toContain("max-md:opacity-0");
+    expect(html).toContain("max-md:focus-within:opacity-100");
+
+    const revealed = renderToStaticMarkup(
+      <MessageHoverMetadata revealed side="start">
+        <div data-testid="message-actions" />
+      </MessageHoverMetadata>,
+    );
+    expect(revealed).toContain("pointer-events-auto opacity-100");
+    expect(revealed).toContain("max-md:end-0");
+    expect(revealed).not.toContain("max-md:opacity-0");
+  });
+
   it("pins the rail open while a nested menu is active", () => {
     const html = renderToStaticMarkup(
       <MessageHoverMetadata pinned side="end">
