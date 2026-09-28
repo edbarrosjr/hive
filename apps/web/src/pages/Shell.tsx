@@ -131,7 +131,11 @@ import { createPortal } from "react-dom";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArtifactFileCard } from "../components/ArtifactFileCard";
 import { AskCard } from "../components/AskCard";
-import { ActiveBotGlyph, CollaborationMarker } from "../components/ai/CollaborationMarker";
+import {
+  ActiveBotGlyph,
+  CollaborationMarker,
+  TypingBubble,
+} from "../components/ai/CollaborationMarker";
 import { CloudAgentCard } from "../components/CloudAgentCard";
 import { ComputerMaintenanceActions } from "../components/ComputerMaintenanceActions";
 import {
@@ -170,6 +174,7 @@ import {
   revokePendingAttachmentPreviews,
 } from "../lib/pending-attachments";
 import { markAfterPaint, markOnce } from "../lib/performance";
+import { usePhoneLayout } from "../lib/phone-layout";
 import { quoteDraftForSelection } from "../lib/quote-selection";
 import { clearSpaceSelection, rpc, selectedSpaceId, selectSpace } from "../lib/rpc";
 import { readSeenRunErrorIds, rememberSeenRunErrorId } from "../lib/run-error-storage";
@@ -1672,6 +1677,7 @@ export function ShellPage() {
     ["running", "queued", "leased"].includes(run.status),
   );
   const transcriptRunning = workingRuns.length > 0;
+  const phone = usePhoneLayout();
   const previousMascotRun = useRef<{ id: string; status: RunStatus } | null>(null);
   const [completedMascotRun, setCompletedMascotRun] = useState<string | null>(null);
   useEffect(() => {
@@ -3231,9 +3237,15 @@ export function ShellPage() {
       <main
         aria-hidden={mobileSidebarOpen || undefined}
         inert={mobileSidebarOpen}
-        className="flex min-w-0 flex-1 flex-col bg-background"
+        className="relative flex min-w-0 flex-1 flex-col bg-background"
       >
-        <div className="app-drag flex items-center justify-between border-b border-sidebar-border px-3 py-[17px] md:px-[22px]">
+        {/* Phone: the header floats over the transcript, which scrolls beneath it. */}
+        <div className="app-drag relative flex items-center justify-between px-3 py-[17px] max-md:pointer-events-none max-md:absolute max-md:inset-x-0 max-md:top-0 max-md:z-30 max-md:items-start max-md:pt-3 md:border-b md:border-sidebar-border md:px-[22px]">
+          {/* Phone: content scrolling beneath the floating header fades out instead of clashing with it. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[150px] bg-linear-to-b from-background from-45% to-transparent md:hidden"
+          />
           <div className="flex min-w-0 items-center gap-2">
             {/* Collapsed bots sidebar: this header is the leading edge for window chrome. */}
             {botsSidebarCollapsed && desktopBridge() ? <WindowChrome /> : null}
@@ -3241,9 +3253,9 @@ export function ShellPage() {
               type="button"
               aria-label={t`Open navigation`}
               onClick={() => setMobileSidebarOpen(true)}
-              className="app-no-drag grid h-8 w-8 shrink-0 place-items-center rounded-lg text-foreground/75 hover:bg-accent md:hidden"
+              className="app-no-drag pointer-events-auto grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-foreground hover:bg-accent md:hidden"
             >
-              <Menu size={19} strokeWidth={1.7} />
+              <Menu size={21} strokeWidth={1.8} />
             </button>
             {botsSidebarCollapsed ? (
               <button
@@ -3261,18 +3273,18 @@ export function ShellPage() {
               type="button"
               data-testid="bot-settings-trigger"
               onClick={() => setPanel(inGroup ? "group-settings" : "settings")}
-              className="app-no-drag flex min-w-0 items-center gap-3"
+              className="app-no-drag flex min-w-0 items-center gap-3 max-md:pointer-events-auto max-md:absolute max-md:start-1/2 max-md:top-3 max-md:max-w-[58%] max-md:-translate-x-1/2 max-md:flex-col max-md:gap-0.5 max-md:rtl:translate-x-1/2"
             >
               {inGroup ? (
                 <GroupAvatar
                   members={activeSnapshot?.members ?? activeGroup?.members ?? []}
-                  size={26}
+                  size={phone ? 52 : 26}
                 />
               ) : active ? (
                 <BotAvatar
                   color={active.color}
                   identity={active.id}
-                  size={26}
+                  size={phone ? 56 : 26}
                   status={active.status}
                   expression={
                     transcriptRunning
@@ -3283,12 +3295,20 @@ export function ShellPage() {
                   }
                 />
               ) : null}
-              <span className="min-w-0">
-                <span className="block truncate text-[16px] font-medium text-foreground" dir="auto">
+              <span className="flex min-w-0 max-w-full flex-col md:items-start max-md:items-center max-md:rounded-[18px] max-md:bg-secondary max-md:px-4 max-md:py-1.5">
+                <span
+                  className="block max-w-full truncate text-[16px] font-medium text-foreground max-md:text-[16px] max-md:font-semibold"
+                  dir="auto"
+                >
                   {inGroup
                     ? (activeGroup?.name ?? activeSnapshot?.groupName ?? t`Group`)
                     : (active?.name ?? t`Select a bot`)}
                 </span>
+                {transcriptRunning ? (
+                  <span className="text-[14px] text-muted-foreground md:hidden">
+                    <Trans>Working…</Trans>
+                  </span>
+                ) : null}
               </span>
             </button>
           </div>
@@ -3306,7 +3326,7 @@ export function ShellPage() {
                   }
                 }}
                 data-active={panel === "computer" ? "" : undefined}
-                className="app-no-drag grid h-[30px] w-[34px] place-items-center rounded-[9px] hover:bg-accent data-active:bg-accent"
+                className="app-no-drag grid h-[30px] w-[34px] place-items-center rounded-[9px] hover:bg-accent data-active:bg-accent max-md:pointer-events-auto max-md:size-11 max-md:rounded-full max-md:bg-secondary"
               >
                 <Monitor size={18} strokeWidth={1.6} className="text-foreground/75" />
               </button>
@@ -4444,6 +4464,10 @@ const Transcript = memo(function Transcript({
     workingBotName != null && workingBotName !== ""
       ? t`${workingBotName} is working`
       : t`Bots are working`;
+  const phone = usePhoneLayout();
+  // Phone: a tapped message shows its actions above the bubble instead of beside it.
+  const [revealedMessageId, setRevealedMessageId] = useState<string | null>(null);
+  const tapOrigin = useRef<{ x: number; y: number } | null>(null);
   const [quoteDraft, setQuoteDraft] = useState<{
     message: ThreadMessage;
     text: string;
@@ -4569,11 +4593,29 @@ const Transcript = memo(function Transcript({
   );
 
   return (
-    <div className="relative flex min-h-0 flex-1">
+    // Isolated so message z-indices stay below the phone's floating header.
+    <div className="relative isolate flex min-h-0 flex-1">
       <div
         ref={scrollRef}
         data-testid="transcript"
+        onPointerUp={(event) => {
+          const origin = tapOrigin.current;
+          tapOrigin.current = null;
+          // Only a touch tap reveals actions: a drag is a scroll, a mouse has hover.
+          if (!phone || event.pointerType !== "touch" || !origin) return;
+          if (Math.abs(event.clientX - origin.x) > 10 || Math.abs(event.clientY - origin.y) > 10)
+            return;
+          const target = event.target as HTMLElement;
+          if (target.closest("a, button, input, textarea, select, [role='menuitem']")) return;
+          if (window.getSelection()?.toString()) return;
+          const id = target.closest<HTMLElement>("[data-message-id]")?.dataset.messageId ?? null;
+          setRevealedMessageId((current) => (id && current !== id ? id : null));
+        }}
+        onPointerCancel={() => {
+          tapOrigin.current = null;
+        }}
         onPointerDown={(event) => {
+          tapOrigin.current = { x: event.clientX, y: event.clientY };
           lastScrollTop.current = event.currentTarget.scrollTop;
           autoScrolling.current = false;
           following.current = false;
@@ -4608,7 +4650,7 @@ const Transcript = memo(function Transcript({
             following.current = false;
           }
         }}
-        className="rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-5 md:px-7 md:py-6"
+        className="rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-5 max-md:gap-3 max-md:pt-[132px] md:px-7 md:py-6"
       >
         {olderCursor != null ? (
           <button
@@ -4670,8 +4712,8 @@ const Transcript = memo(function Transcript({
                       ? undefined
                       : `relative w-fit min-w-0 ${
                           message.role === "user"
-                            ? "max-w-[min(70%,calc(100%_-_6rem))]"
-                            : "max-w-[min(74%,calc(100%_-_6rem))]"
+                            ? "max-w-[min(70%,calc(100%_-_6rem))] max-md:max-w-[80%]"
+                            : "max-w-[min(74%,calc(100%_-_6rem))] max-md:max-w-[92%]"
                         }`
                   }
                 >
@@ -4679,6 +4721,7 @@ const Transcript = memo(function Transcript({
                     <MessageHoverActions
                       message={message}
                       side={message.role === "user" ? "start" : "end"}
+                      revealed={revealedMessageId === message.id}
                       onReply={onReply}
                       onReact={onReact}
                     />
@@ -4720,14 +4763,14 @@ const Transcript = memo(function Transcript({
                 <div
                   data-testid="message-reactions"
                   className={cn(
-                    "mt-1 flex flex-wrap gap-1",
+                    "mt-1 flex flex-wrap gap-1 max-md:relative max-md:z-10 max-md:-mt-2.5 max-md:px-2",
                     message.role === "user" && "justify-end",
                   )}
                 >
                   {[...messageReactions].map(([emoji, count]) => (
                     <span
                       key={emoji}
-                      className="rounded-full border border-border bg-muted px-2 py-0.5 text-xs"
+                      className="rounded-full border border-border bg-muted px-2 py-0.5 text-xs max-md:border-2 max-md:border-background max-md:bg-secondary max-md:px-2.5 max-md:text-[15px]"
                     >
                       {emoji}
                       {count > 1 ? ` ${count}` : ""}
@@ -4747,7 +4790,12 @@ const Transcript = memo(function Transcript({
                 block.kind === "progress" && !isToolActivityBlock(block) && Boolean(block.text),
             ),
         ) ? (
-          <ActiveBotGlyph bots={workingBots} label={workingLabel} />
+          <>
+            <div className="max-md:hidden">
+              <ActiveBotGlyph bots={workingBots} label={workingLabel} />
+            </div>
+            <TypingBubble label={workingLabel} className="md:hidden" />
+          </>
         ) : null}
       </div>
       {quoteDraft ? (
@@ -5332,7 +5380,7 @@ const Composer = memo(function Composer({
       ) : null}
       <div
         data-testid="composer-bar"
-        className="flex items-center gap-3.5 rounded-full border border-border bg-background py-[9px] pe-2.5 ps-3 transition-colors focus-within:border-ring"
+        className="flex items-center gap-3.5 rounded-full border border-border bg-background py-[9px] pe-2.5 ps-3 transition-colors focus-within:border-ring max-md:gap-2 max-md:border-transparent max-md:bg-secondary max-md:py-1 max-md:ps-1 max-md:pe-1"
       >
         <input
           ref={fileInputRef}
@@ -5348,9 +5396,9 @@ const Composer = memo(function Composer({
           aria-label={t`Attach file`}
           disabled={disabled}
           onClick={() => fileInputRef.current?.click()}
-          className="size-8 shrink-0 rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="size-8 shrink-0 rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground max-md:size-9 max-md:border-0 max-md:bg-transparent max-md:text-foreground"
         >
-          <Plus size={16} strokeWidth={2} />
+          <Plus size={16} strokeWidth={2} className="max-md:size-[22px]" />
         </Button>
         <div className="flex min-w-0 flex-1 flex-wrap items-end gap-1.5">
           {selectedSkill ? (
@@ -5463,7 +5511,7 @@ const Composer = memo(function Composer({
             autoComplete="off"
             dir="auto"
             rows={1}
-            className="max-h-32 min-h-[24px] min-w-[8rem] flex-1 resize-none overflow-y-auto bg-transparent py-0.5 text-[15.5px] leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-40"
+            className="max-h-32 min-h-[24px] min-w-[8rem] flex-1 resize-none overflow-y-auto bg-transparent py-0.5 text-[15.5px] leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-40 max-md:text-[17px]"
           />
         </div>
         {onVoice ? (
@@ -5474,9 +5522,9 @@ const Composer = memo(function Composer({
             title={t`Voice`}
             disabled={disabled}
             onClick={onVoice}
-            className="size-8 shrink-0 rounded-full text-foreground/75"
+            className="size-8 shrink-0 rounded-full text-foreground/75 max-md:size-9 max-md:border-0 max-md:bg-transparent max-md:text-muted-foreground"
           >
-            <Mic size={16} strokeWidth={1.8} />
+            <Mic size={16} strokeWidth={1.8} className="max-md:size-5" />
           </Button>
         ) : null}
         {running ? (
@@ -5486,7 +5534,7 @@ const Composer = memo(function Composer({
               aria-label={t`Send`}
               disabled={sending || !canSend || disabled}
               onClick={send}
-              className="size-8 rounded-full bg-white text-black hover:bg-white/90 shadow-sm transition-transform active:scale-95"
+              className="size-8 rounded-full bg-white text-black hover:bg-white/90 shadow-sm transition-transform active:scale-95 max-md:size-9 max-md:bg-chat-user max-md:text-chat-user-foreground max-md:shadow-none max-md:hover:bg-chat-user/90"
             >
               <ArrowUp size={16} strokeWidth={2.2} />
             </Button>
@@ -5496,7 +5544,7 @@ const Composer = memo(function Composer({
               aria-label={t`Stop`}
               disabled={sending}
               onClick={() => void onStop()}
-              className="size-8 rounded-full border border-border bg-muted text-foreground/80 shadow-sm transition-colors hover:bg-accent hover:text-foreground"
+              className="size-8 rounded-full border border-border bg-muted text-foreground/80 shadow-sm transition-colors hover:bg-accent hover:text-foreground max-md:size-9 max-md:border-0 max-md:bg-chat-user max-md:text-chat-user-foreground max-md:shadow-none"
             >
               <Square size={11} strokeWidth={0} fill="currentColor" />
             </Button>
@@ -5507,7 +5555,7 @@ const Composer = memo(function Composer({
             aria-label={t`Send`}
             disabled={sending || !canSend || disabled}
             onClick={send}
-            className="size-8 shrink-0 rounded-full bg-white text-black hover:bg-white/90 shadow-sm transition-transform active:scale-95 disabled:bg-white/10 disabled:text-muted-foreground/30 disabled:shadow-none"
+            className="size-8 shrink-0 rounded-full bg-white text-black hover:bg-white/90 shadow-sm transition-transform active:scale-95 disabled:bg-white/10 disabled:text-muted-foreground/30 disabled:shadow-none max-md:size-9 max-md:bg-chat-user max-md:text-chat-user-foreground max-md:shadow-none max-md:hover:bg-chat-user/90 max-md:disabled:bg-chat-user max-md:disabled:text-chat-user-foreground max-md:disabled:opacity-40"
           >
             <ArrowUp size={16} strokeWidth={2.2} />
           </Button>
@@ -5616,11 +5664,13 @@ function formatRosterTime(isoDate?: string | null): string {
 function MessageHoverActions({
   message,
   side,
+  revealed = false,
   onReply,
   onReact,
 }: {
   message: ThreadMessage;
   side: "start" | "end";
+  revealed?: boolean;
   onReply: (message: ThreadMessage) => void;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
 }) {
@@ -5641,7 +5691,7 @@ function MessageHoverActions({
     "grid h-7 w-7 place-items-center text-muted-foreground transition-colors hover:text-foreground";
 
   return (
-    <MessageHoverMetadata pinned={moreOpen || reactionsOpen} side={side}>
+    <MessageHoverMetadata pinned={moreOpen || reactionsOpen} revealed={revealed} side={side}>
       <div data-testid="message-hover-actions" className="flex items-center gap-0.5">
         {canReactToThreadMessage(message) ? (
           <Popover open={reactionsOpen} onOpenChange={setReactionsOpen}>
@@ -5863,7 +5913,7 @@ const MessageView = memo(function MessageView({
         <div className="flex w-fit max-w-full justify-start">
           <div
             data-testid="message-bot-bubble"
-            className="max-w-full space-y-2.5 rounded-[20px] bg-muted px-[18px] py-3 text-[15.5px] leading-[1.5] text-foreground/90"
+            className="max-w-full space-y-2.5 rounded-[20px] bg-muted px-[18px] py-3 text-[15.5px] leading-[1.5] text-foreground/90 max-md:rounded-[22px] max-md:bg-chat-bot max-md:px-4 max-md:py-[11px] max-md:text-[17px] max-md:leading-[22px] max-md:text-chat-bot-foreground max-md:[&_li+li]:mt-3"
             dir="auto"
           >
             {visibleNarrationBlocks.map((block, i) => {
@@ -5956,7 +6006,7 @@ const MessageView = memo(function MessageView({
             <div key={i} className="flex w-fit max-w-full justify-start">
               <div
                 data-testid="message-bot-bubble"
-                className="max-w-full rounded-[20px] bg-muted px-[18px] py-3 text-[15.5px] leading-[1.5] text-foreground/90"
+                className="max-w-full rounded-[20px] bg-muted px-[18px] py-3 text-[15.5px] leading-[1.5] text-foreground/90 max-md:rounded-[22px] max-md:bg-chat-bot max-md:px-4 max-md:py-[11px] max-md:text-[17px] max-md:leading-[22px] max-md:text-chat-bot-foreground max-md:[&_li+li]:mt-3"
                 dir="auto"
               >
                 <ChatMarkdown streaming>{block.text}</ChatMarkdown>
@@ -6110,7 +6160,7 @@ const MessageView = memo(function MessageView({
             <div key={i} className="flex w-fit max-w-full justify-end">
               <div
                 data-testid="message-user-bubble"
-                className="max-w-full whitespace-pre-wrap wrap-anywhere rounded-[20px] bg-chat-user px-[18px] py-3 text-[15.5px] leading-[1.45] text-chat-user-foreground"
+                className="max-w-full whitespace-pre-wrap wrap-anywhere rounded-[20px] bg-chat-user px-[18px] py-3 text-[15.5px] leading-[1.45] text-chat-user-foreground max-md:rounded-[22px] max-md:px-4 max-md:py-[11px] max-md:text-[17px] max-md:leading-[22px]"
                 dir="auto"
               >
                 {block.text}
@@ -6123,7 +6173,7 @@ const MessageView = memo(function MessageView({
             <div key={i} className="flex w-fit max-w-full justify-start">
               <div
                 data-testid="message-bot-bubble"
-                className="max-w-full rounded-[20px] bg-muted px-[18px] py-3 text-[15.5px] leading-[1.5] text-foreground/90"
+                className="max-w-full rounded-[20px] bg-muted px-[18px] py-3 text-[15.5px] leading-[1.5] text-foreground/90 max-md:rounded-[22px] max-md:bg-chat-bot max-md:px-4 max-md:py-[11px] max-md:text-[17px] max-md:leading-[22px] max-md:text-chat-bot-foreground max-md:[&_li+li]:mt-3"
                 dir="auto"
               >
                 <ChatMarkdown>{block.text}</ChatMarkdown>

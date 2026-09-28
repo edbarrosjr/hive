@@ -375,7 +375,23 @@ test.describe("touch message actions", () => {
       .filter({ has: botText })
       .first();
     const rail = row.getByTestId("message-hover-rail");
+    // At phone width the rail stays out of the way until the message is tapped,
+    // then sits above the bubble instead of beside it.
+    await expect(rail).toHaveCSS("opacity", "0");
+    await botText.tap();
     await expect(rail).toHaveCSS("opacity", "1");
+    const [railBox, bubbleBox] = await Promise.all([
+      rail.boundingBox(),
+      row.getByTestId("message-bot-bubble").first().boundingBox(),
+    ]);
+    expect(railBox && bubbleBox && railBox.y + railBox.height <= bubbleBox.y + 1).toBe(true);
+    // Revealed actions must fit without scrolling the transcript sideways and
+    // pulling messages off the margin.
+    const overflow = await page
+      .getByTestId("transcript")
+      .evaluate((transcript) => transcript.scrollWidth - transcript.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    await captureScreenshot(page, testInfo, "message-rail-touch");
     await expect(rail.getByRole("button", { name: "Reply", exact: true })).toBeHidden();
     await rail.getByRole("button", { name: "React", exact: true }).tap();
     await expect(page.getByRole("button", { name: "🎉", exact: true })).toBeVisible();

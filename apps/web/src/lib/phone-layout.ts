@@ -1,0 +1,18 @@
+import { useSyncExternalStore } from "react";
+
+/** Mirrors Tailwind's `md` breakpoint: below it the shell uses the phone layout. */
+const PHONE_QUERY = "(max-width: 767.98px)";
+
+function subscribe(onChange: () => void): () => void {
+  const query = window.matchMedia(PHONE_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+export function usePhoneLayout(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(PHONE_QUERY).matches,
+    () => false,
+  );
+}

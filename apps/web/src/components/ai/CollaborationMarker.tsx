@@ -40,3 +40,24 @@ export function ActiveBotGlyph({ bots, label }: { bots: GroupAvatarMember[]; lab
     </div>
   );
 }
+
+/** Phone-width working state: a reply bubble holding three pulsing dots. */
+export function TypingBubble({ label, className = "" }: { label: string; className?: string }) {
+  return (
+    <div
+      role="status"
+      aria-label={label}
+      data-testid="typing-bubble"
+      className={`flex w-fit items-center gap-1.5 rounded-[22px] bg-muted px-[18px] py-4 ${className}`}
+    >
+      {[0, 200, 400].map((delay) => (
+        <span
+          key={delay}
+          aria-hidden
+          className="size-2 animate-pulse rounded-full bg-muted-foreground motion-reduce:animate-none"
+          style={{ animationDelay: `${delay}ms` }}
+        />
+      ))}
+    </div>
+  );
+}
