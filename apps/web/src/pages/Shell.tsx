@@ -3273,13 +3273,13 @@ export function ShellPage() {
               {inGroup ? (
                 <GroupAvatar
                   members={activeSnapshot?.members ?? activeGroup?.members ?? []}
-                  size={phone ? 64 : 26}
+                  size={phone ? 52 : 26}
                 />
               ) : active ? (
                 <BotAvatar
                   color={active.color}
                   identity={active.id}
-                  size={phone ? 72 : 26}
+                  size={phone ? 56 : 26}
                   status={active.status}
                   expression={
                     transcriptRunning
@@ -4624,7 +4624,7 @@ const Transcript = memo(function Transcript({
             following.current = false;
           }
         }}
-        className="rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-5 max-md:pt-[150px] md:px-7 md:py-6"
+        className="rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-5 max-md:pt-[132px] md:px-7 md:py-6"
       >
         {olderCursor != null ? (
           <button
