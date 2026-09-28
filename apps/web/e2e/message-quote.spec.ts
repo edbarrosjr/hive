@@ -153,6 +153,9 @@ test("a selection spanning two messages offers no quote action", async ({ page }
   await composer.press("Enter");
   await expect(userRow(firstText)).toBeVisible({ timeout: 20_000 });
   await composer.fill(secondText);
+  // The first row can stream in before its send settles; Enter is ignored
+  // until the composer can send again.
+  await expect(page.getByRole("button", { name: "Send" })).toBeEnabled();
   await composer.press("Enter");
   await expect(userRow(secondText)).toBeVisible({ timeout: 20_000 });
 
