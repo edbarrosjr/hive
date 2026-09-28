@@ -1,4 +1,5 @@
 import type { MessageBlock } from "@rakazo/contracts";
+import { panelToText } from "./panel.js";
 
 /** A fenced block becomes a mention of itself, with its language if known. */
 function describeCodeBlock(fence: string): string {
@@ -212,6 +213,7 @@ export function speechFromBlocks(blocks: MessageBlock[]): string {
       if (block.kind === "card") {
         return block.lines.map((line) => `${line.k}: ${line.v}`).join(". ");
       }
+      if (block.kind === "panel") return panelToText(block);
       return "";
     })
     .filter(Boolean)

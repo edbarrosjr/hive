@@ -230,7 +230,9 @@ import {
   ChartBlockView,
   ChoiceCard,
   McpApprovalCard,
+  UnknownBlockCard,
 } from "./shell/message-cards";
+import { PanelCard } from "./shell/panel-card";
 import { WindowChrome } from "./WindowChrome";
 
 const BotContextMenu = lazy(() =>
@@ -6210,7 +6212,10 @@ const MessageView = memo(function MessageView({
             </div>
           );
         }
-        return null;
+        if (block.kind === "panel") {
+          return <PanelCard key={`${message.id}-${i}`} block={block} />;
+        }
+        return <UnknownBlockCard key={`${message.id}-${i}`} block={block} />;
       })}
     </>
   );

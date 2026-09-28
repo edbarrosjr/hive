@@ -66,6 +66,24 @@ describe("connectorToolRequiresApproval", () => {
     expect(connectorToolRequiresApproval("list_items")).toBe(false);
     expect(connectorToolRequiresApproval("send_message")).toBe(true);
   });
+
+  it("gates a name the patterns cannot read until the server declares it read-only", () => {
+    expect(connectorToolRequiresApproval("mcp__clave__minhas_vendas")).toBe(true);
+    expect(connectorToolRequiresApproval("mcp__clave__minhas_vendas", true)).toBe(false);
+    expect(connectorToolRequiresApproval("mcp__clave__detalhe_da_venda", true)).toBe(false);
+  });
+
+  it("keeps a mutating name gated however the server annotates it", () => {
+    expect(connectorToolRequiresApproval("delete_account", true)).toBe(true);
+    expect(connectorToolRequiresApproval("send_message", true)).toBe(true);
+    expect(connectorToolRequiresApproval("read_and_delete_items", true)).toBe(true);
+  });
+
+  it("ignores a false or absent hint and falls back to the name", () => {
+    expect(connectorToolRequiresApproval("list_items", false)).toBe(false);
+    expect(connectorToolRequiresApproval("mcp__clave__minhas_vendas", false)).toBe(true);
+    expect(connectorToolRequiresApproval("mcp__clave__minhas_vendas", undefined)).toBe(true);
+  });
 });
 
 describe("unattendedTriggerToolRequiresApproval", () => {
@@ -94,6 +112,11 @@ describe("unattendedTriggerToolRequiresApproval", () => {
       true,
     );
     expect(unattendedTriggerToolRequiresApproval("user", "shell", false)).toBe(false);
+    // A webhook run has no one watching, so the server's hint does not apply
+    // there: an unreadable name still stops for the owner.
+    expect(
+      unattendedTriggerToolRequiresApproval("webhook", "mcp__clave__minhas_vendas", true),
+    ).toBe(true);
   });
 });
 
