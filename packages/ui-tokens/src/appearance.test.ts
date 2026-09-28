@@ -75,6 +75,8 @@ describe("appearance preference", () => {
     const light = tokensForAppearance("light");
     expect(dark.chatUser).not.toBe(dark.muted);
     expect(light.chatUser).not.toBe(light.muted);
+    expect(dark.chatBot).not.toBe(dark.background);
+    expect(light.chatBot).not.toBe(light.background);
     expect(dark.sidebar).not.toBe(dark.background);
     expect(light.sidebar).not.toBe(light.background);
   });

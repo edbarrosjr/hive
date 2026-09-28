@@ -3268,7 +3268,7 @@ export function ShellPage() {
               type="button"
               data-testid="bot-settings-trigger"
               onClick={() => setPanel(inGroup ? "group-settings" : "settings")}
-              className="app-no-drag flex min-w-0 items-center gap-3 max-md:pointer-events-auto max-md:absolute max-md:start-1/2 max-md:top-3 max-md:max-w-[58%] max-md:-translate-x-1/2 max-md:flex-col max-md:gap-1 max-md:rtl:translate-x-1/2"
+              className="app-no-drag flex min-w-0 items-center gap-3 max-md:pointer-events-auto max-md:absolute max-md:start-1/2 max-md:top-3 max-md:max-w-[58%] max-md:-translate-x-1/2 max-md:flex-col max-md:gap-0.5 max-md:rtl:translate-x-1/2"
             >
               {inGroup ? (
                 <GroupAvatar
@@ -3292,7 +3292,7 @@ export function ShellPage() {
               ) : null}
               <span className="flex min-w-0 max-w-full flex-col md:items-start max-md:items-center max-md:rounded-[18px] max-md:bg-secondary max-md:px-4 max-md:py-1.5 max-md:shadow-sm">
                 <span
-                  className="block max-w-full truncate text-[16px] font-medium text-foreground max-md:text-[17px] max-md:font-semibold"
+                  className="block max-w-full truncate text-[16px] font-medium text-foreground max-md:text-[16px] max-md:font-semibold"
                   dir="auto"
                 >
                   {inGroup
@@ -4624,7 +4624,7 @@ const Transcript = memo(function Transcript({
             following.current = false;
           }
         }}
-        className="rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-5 max-md:pt-[132px] md:px-7 md:py-6"
+        className="rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-5 max-md:gap-3 max-md:pt-[132px] md:px-7 md:py-6"
       >
         {olderCursor != null ? (
           <button
@@ -5353,7 +5353,7 @@ const Composer = memo(function Composer({
       ) : null}
       <div
         data-testid="composer-bar"
-        className="flex items-center gap-3.5 rounded-full border border-border bg-background py-[9px] pe-2.5 ps-3 transition-colors focus-within:border-ring max-md:gap-2 max-md:border-transparent max-md:bg-secondary max-md:py-1.5 max-md:ps-1.5 max-md:pe-1.5"
+        className="flex items-center gap-3.5 rounded-full border border-border bg-background py-[9px] pe-2.5 ps-3 transition-colors focus-within:border-ring max-md:gap-2 max-md:border-transparent max-md:bg-secondary max-md:py-1 max-md:ps-1 max-md:pe-1"
       >
         <input
           ref={fileInputRef}
@@ -5369,7 +5369,7 @@ const Composer = memo(function Composer({
           aria-label={t`Attach file`}
           disabled={disabled}
           onClick={() => fileInputRef.current?.click()}
-          className="size-8 shrink-0 rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground max-md:size-10 max-md:border-0 max-md:bg-transparent max-md:text-foreground"
+          className="size-8 shrink-0 rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground max-md:size-9 max-md:border-0 max-md:bg-transparent max-md:text-foreground"
         >
           <Plus size={16} strokeWidth={2} className="max-md:size-[22px]" />
         </Button>
@@ -5495,7 +5495,7 @@ const Composer = memo(function Composer({
             title={t`Voice`}
             disabled={disabled}
             onClick={onVoice}
-            className="size-8 shrink-0 rounded-full text-foreground/75 max-md:size-10 max-md:border-0 max-md:bg-transparent max-md:text-muted-foreground"
+            className="size-8 shrink-0 rounded-full text-foreground/75 max-md:size-9 max-md:border-0 max-md:bg-transparent max-md:text-muted-foreground"
           >
             <Mic size={16} strokeWidth={1.8} className="max-md:size-5" />
           </Button>
@@ -5507,7 +5507,7 @@ const Composer = memo(function Composer({
               aria-label={t`Send`}
               disabled={sending || !canSend || disabled}
               onClick={send}
-              className="size-8 rounded-full bg-white text-black hover:bg-white/90 shadow-sm transition-transform active:scale-95 max-md:size-10 max-md:bg-chat-user max-md:text-chat-user-foreground max-md:hover:bg-chat-user/90"
+              className="size-8 rounded-full bg-white text-black hover:bg-white/90 shadow-sm transition-transform active:scale-95 max-md:size-9 max-md:bg-chat-user max-md:text-chat-user-foreground max-md:hover:bg-chat-user/90"
             >
               <ArrowUp size={16} strokeWidth={2.2} />
             </Button>
@@ -5517,7 +5517,7 @@ const Composer = memo(function Composer({
               aria-label={t`Stop`}
               disabled={sending}
               onClick={() => void onStop()}
-              className="size-8 rounded-full border border-border bg-muted text-foreground/80 shadow-sm transition-colors hover:bg-accent hover:text-foreground max-md:size-10 max-md:border-0 max-md:bg-chat-user max-md:text-chat-user-foreground"
+              className="size-8 rounded-full border border-border bg-muted text-foreground/80 shadow-sm transition-colors hover:bg-accent hover:text-foreground max-md:size-9 max-md:border-0 max-md:bg-chat-user max-md:text-chat-user-foreground"
             >
               <Square size={11} strokeWidth={0} fill="currentColor" />
             </Button>
@@ -5528,7 +5528,7 @@ const Composer = memo(function Composer({
             aria-label={t`Send`}
             disabled={sending || !canSend || disabled}
             onClick={send}
-            className="size-8 shrink-0 rounded-full bg-white text-black hover:bg-white/90 shadow-sm transition-transform active:scale-95 disabled:bg-white/10 disabled:text-muted-foreground/30 disabled:shadow-none max-md:size-10 max-md:bg-chat-user max-md:text-chat-user-foreground max-md:hover:bg-chat-user/90 max-md:disabled:bg-chat-user max-md:disabled:text-chat-user-foreground max-md:disabled:opacity-40"
+            className="size-8 shrink-0 rounded-full bg-white text-black hover:bg-white/90 shadow-sm transition-transform active:scale-95 disabled:bg-white/10 disabled:text-muted-foreground/30 disabled:shadow-none max-md:size-9 max-md:bg-chat-user max-md:text-chat-user-foreground max-md:hover:bg-chat-user/90 max-md:disabled:bg-chat-user max-md:disabled:text-chat-user-foreground max-md:disabled:opacity-40"
           >
             <ArrowUp size={16} strokeWidth={2.2} />
           </Button>
@@ -5884,7 +5884,7 @@ const MessageView = memo(function MessageView({
         <div className="flex w-fit max-w-full justify-start">
           <div
             data-testid="message-bot-bubble"
-            className="max-w-full space-y-2.5 rounded-[20px] bg-muted px-[18px] py-3 text-[15.5px] leading-[1.5] text-foreground/90"
+            className="max-w-full space-y-2.5 rounded-[20px] bg-muted px-[18px] py-3 text-[15.5px] leading-[1.5] text-foreground/90 max-md:rounded-[22px] max-md:bg-chat-bot max-md:px-4 max-md:py-[11px] max-md:text-[17px] max-md:leading-[22px] max-md:text-chat-bot-foreground max-md:[&_li+li]:mt-3"
             dir="auto"
           >
             {visibleNarrationBlocks.map((block, i) => {
@@ -5977,7 +5977,7 @@ const MessageView = memo(function MessageView({
             <div key={i} className="flex w-fit max-w-full justify-start">
               <div
                 data-testid="message-bot-bubble"
-                className="max-w-full rounded-[20px] bg-muted px-[18px] py-3 text-[15.5px] leading-[1.5] text-foreground/90 max-md:rounded-[22px] max-md:text-[17px]"
+                className="max-w-full rounded-[20px] bg-muted px-[18px] py-3 text-[15.5px] leading-[1.5] text-foreground/90 max-md:rounded-[22px] max-md:bg-chat-bot max-md:px-4 max-md:py-[11px] max-md:text-[17px] max-md:leading-[22px] max-md:text-chat-bot-foreground max-md:[&_li+li]:mt-3"
                 dir="auto"
               >
                 <ChatMarkdown streaming>{block.text}</ChatMarkdown>
@@ -6131,7 +6131,7 @@ const MessageView = memo(function MessageView({
             <div key={i} className="flex w-fit max-w-full justify-end">
               <div
                 data-testid="message-user-bubble"
-                className="max-w-full whitespace-pre-wrap wrap-anywhere rounded-[20px] bg-chat-user px-[18px] py-3 text-[15.5px] leading-[1.45] text-chat-user-foreground max-md:rounded-[22px] max-md:text-[17px]"
+                className="max-w-full whitespace-pre-wrap wrap-anywhere rounded-[20px] bg-chat-user px-[18px] py-3 text-[15.5px] leading-[1.45] text-chat-user-foreground max-md:rounded-[22px] max-md:px-4 max-md:py-[11px] max-md:text-[17px] max-md:leading-[22px]"
                 dir="auto"
               >
                 {block.text}
@@ -6144,7 +6144,7 @@ const MessageView = memo(function MessageView({
             <div key={i} className="flex w-fit max-w-full justify-start">
               <div
                 data-testid="message-bot-bubble"
-                className="max-w-full rounded-[20px] bg-muted px-[18px] py-3 text-[15.5px] leading-[1.5] text-foreground/90 max-md:rounded-[22px] max-md:text-[17px]"
+                className="max-w-full rounded-[20px] bg-muted px-[18px] py-3 text-[15.5px] leading-[1.5] text-foreground/90 max-md:rounded-[22px] max-md:bg-chat-bot max-md:px-4 max-md:py-[11px] max-md:text-[17px] max-md:leading-[22px] max-md:text-chat-bot-foreground max-md:[&_li+li]:mt-3"
                 dir="auto"
               >
                 <ChatMarkdown>{block.text}</ChatMarkdown>

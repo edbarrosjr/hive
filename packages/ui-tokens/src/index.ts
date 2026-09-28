@@ -24,6 +24,9 @@ export type ColorTokens = {
   secondaryForeground: string;
   chatUser: string;
   chatUserForeground: string;
+  /** Bot reply bubble: a surface lifted clearly off the background. */
+  chatBot: string;
+  chatBotForeground: string;
   muted: string;
   mutedForeground: string;
   accent: string;
@@ -61,6 +64,8 @@ export const darkTokens = {
   secondaryForeground: "#ECECEE",
   chatUser: "#0A84FF",
   chatUserForeground: "#FFFFFF",
+  chatBot: "#202124",
+  chatBotForeground: "#F4F4F5",
   muted: "#141518",
   mutedForeground: "#85858A",
   accent: "#1A1B20",
@@ -98,6 +103,8 @@ export const lightTokens = {
   secondaryForeground: "#1A1A1A",
   chatUser: "#007AFF",
   chatUserForeground: "#FFFFFF",
+  chatBot: "#E9E9E6",
+  chatBotForeground: "#1A1A1A",
   muted: "#F0F0ED",
   mutedForeground: "#6C6C70",
   accent: "#EAEAE6",
