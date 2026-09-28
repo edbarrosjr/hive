@@ -3237,14 +3237,10 @@ export function ShellPage() {
       <main
         aria-hidden={mobileSidebarOpen || undefined}
         inert={mobileSidebarOpen}
-        className="flex min-w-0 flex-1 flex-col bg-background"
+        className="relative flex min-w-0 flex-1 flex-col bg-background"
       >
-        <div
-          className={cn(
-            "app-drag relative flex items-center justify-between px-3 py-[17px] max-md:items-start max-md:pt-3 md:border-b md:border-sidebar-border md:px-[22px]",
-            (active || activeGroup) && "max-md:min-h-[152px]",
-          )}
-        >
+        {/* Phone: the header floats over the transcript, which scrolls beneath it. */}
+        <div className="app-drag relative flex items-center justify-between px-3 py-[17px] max-md:pointer-events-none max-md:absolute max-md:inset-x-0 max-md:top-0 max-md:z-30 max-md:items-start max-md:pt-3 md:border-b md:border-sidebar-border md:px-[22px]">
           <div className="flex min-w-0 items-center gap-2">
             {/* Collapsed bots sidebar: this header is the leading edge for window chrome. */}
             {botsSidebarCollapsed && desktopBridge() ? <WindowChrome /> : null}
@@ -3252,7 +3248,7 @@ export function ShellPage() {
               type="button"
               aria-label={t`Open navigation`}
               onClick={() => setMobileSidebarOpen(true)}
-              className="app-no-drag grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-foreground hover:bg-accent md:hidden"
+              className="app-no-drag pointer-events-auto grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-foreground shadow-sm hover:bg-accent md:hidden"
             >
               <Menu size={21} strokeWidth={1.8} />
             </button>
@@ -3272,7 +3268,7 @@ export function ShellPage() {
               type="button"
               data-testid="bot-settings-trigger"
               onClick={() => setPanel(inGroup ? "group-settings" : "settings")}
-              className="app-no-drag flex min-w-0 items-center gap-3 max-md:absolute max-md:start-1/2 max-md:top-3 max-md:max-w-[58%] max-md:-translate-x-1/2 max-md:flex-col max-md:gap-1.5 max-md:rtl:translate-x-1/2"
+              className="app-no-drag flex min-w-0 items-center gap-3 max-md:pointer-events-auto max-md:absolute max-md:start-1/2 max-md:top-3 max-md:max-w-[58%] max-md:-translate-x-1/2 max-md:flex-col max-md:gap-1 max-md:rtl:translate-x-1/2"
             >
               {inGroup ? (
                 <GroupAvatar
@@ -3294,9 +3290,9 @@ export function ShellPage() {
                   }
                 />
               ) : null}
-              <span className="flex min-w-0 max-w-full flex-col md:items-start max-md:items-center">
+              <span className="flex min-w-0 max-w-full flex-col md:items-start max-md:items-center max-md:rounded-[18px] max-md:bg-secondary max-md:px-4 max-md:py-1.5 max-md:shadow-sm">
                 <span
-                  className="block max-w-full truncate text-[16px] font-medium text-foreground max-md:text-[19px] max-md:font-semibold"
+                  className="block max-w-full truncate text-[16px] font-medium text-foreground max-md:text-[17px] max-md:font-semibold"
                   dir="auto"
                 >
                   {inGroup
@@ -3304,7 +3300,7 @@ export function ShellPage() {
                     : (active?.name ?? t`Select a bot`)}
                 </span>
                 {transcriptRunning ? (
-                  <span className="mt-1.5 rounded-full bg-secondary px-3 py-1 text-[14px] text-muted-foreground md:hidden">
+                  <span className="text-[14px] text-muted-foreground md:hidden">
                     <Trans>Working…</Trans>
                   </span>
                 ) : null}
@@ -3325,7 +3321,7 @@ export function ShellPage() {
                   }
                 }}
                 data-active={panel === "computer" ? "" : undefined}
-                className="app-no-drag grid h-[30px] w-[34px] place-items-center rounded-[9px] hover:bg-accent data-active:bg-accent max-md:size-11 max-md:rounded-full max-md:bg-secondary"
+                className="app-no-drag grid h-[30px] w-[34px] place-items-center rounded-[9px] hover:bg-accent data-active:bg-accent max-md:pointer-events-auto max-md:size-11 max-md:rounded-full max-md:bg-secondary max-md:shadow-sm"
               >
                 <Monitor size={18} strokeWidth={1.6} className="text-foreground/75" />
               </button>
@@ -4588,7 +4584,8 @@ const Transcript = memo(function Transcript({
   );
 
   return (
-    <div className="relative flex min-h-0 flex-1">
+    // Isolated so message z-indices stay below the phone's floating header.
+    <div className="relative isolate flex min-h-0 flex-1">
       <div
         ref={scrollRef}
         data-testid="transcript"
@@ -4627,7 +4624,7 @@ const Transcript = memo(function Transcript({
             following.current = false;
           }
         }}
-        className="rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-5 md:px-7 md:py-6"
+        className="rk-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-5 max-md:pt-[150px] md:px-7 md:py-6"
       >
         {olderCursor != null ? (
           <button
