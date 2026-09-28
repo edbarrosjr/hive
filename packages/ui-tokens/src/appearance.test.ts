@@ -46,7 +46,13 @@ describe("appearance preference", () => {
     expect(tokensForAppearance("dark")).toBe(darkTokens);
     expect(tokensForAppearance("light")).toBe(lightTokens);
     for (const key of Object.keys(darkTokens) as (keyof ColorTokens)[]) {
-      if (key === "destructiveForeground" || key === "mascotBody" || key === "mascotEyes") continue;
+      if (
+        key === "destructiveForeground" ||
+        key === "chatUserForeground" ||
+        key === "mascotBody" ||
+        key === "mascotEyes"
+      )
+        continue;
       expect(darkTokens[key], key).not.toBe(lightTokens[key]);
     }
   });

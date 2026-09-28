@@ -25,8 +25,12 @@ describe("Android mobile platform contract", () => {
     expect(thread).toContain('from "react-native-keyboard-controller"');
     expect(thread).toContain("KeyboardAvoidingView");
     expect(thread).toContain('behavior="height"');
-    expect(thread).toContain("useHeaderHeight");
-    expect(thread).toContain("keyboardVerticalOffset={headerHeight}");
+    // Thread screens draw their own header, so nothing sits between the
+    // window top and the avoiding view and no header offset is needed.
+    expect(layout).toContain('name="thread" options={{ title: t("Thread"), headerShown: false }}');
+    expect(thread).toContain('import { ThreadHeader } from "../components/thread-header"');
+    expect(thread).not.toContain("useHeaderHeight");
+    expect(thread).not.toContain("keyboardVerticalOffset");
     expect(thread).not.toContain("automaticOffset");
     expect(thread).not.toContain("KeyboardStickyView");
     expect(thread).toContain("useSafeAreaInsets");

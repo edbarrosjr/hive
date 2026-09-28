@@ -133,6 +133,7 @@ export const RU_MESSAGES: Record<string, string> = {
   Cancelled: "Отменено",
   "Change password": "Изменить пароль",
   "Chat settings": "Настройки чата",
+  Conversations: "Беседы",
   Checking: "Проверка",
   "Checking…": "Проверка…",
   "Check your email": "Проверьте свою электронную почту",

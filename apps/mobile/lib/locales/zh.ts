@@ -121,6 +121,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   Cancelled: "已取消",
   "Change password": "更改密码",
   "Chat settings": "聊天设置",
+  Conversations: "对话",
   Checking: "检查中",
   "Checking…": "正在检查…",
   "Check your email": "请查看邮箱",
