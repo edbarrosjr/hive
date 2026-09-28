@@ -4686,8 +4686,8 @@ const Transcript = memo(function Transcript({
                       ? undefined
                       : `relative w-fit min-w-0 ${
                           message.role === "user"
-                            ? "max-w-[min(70%,calc(100%_-_6rem))] max-md:max-w-[82%]"
-                            : "max-w-[min(74%,calc(100%_-_6rem))] max-md:max-w-[88%]"
+                            ? "max-w-[min(70%,calc(100%_-_6rem))]"
+                            : "max-w-[min(74%,calc(100%_-_6rem))]"
                         }`
                   }
                 >

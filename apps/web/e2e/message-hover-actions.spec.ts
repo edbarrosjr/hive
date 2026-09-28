@@ -376,6 +376,13 @@ test.describe("touch message actions", () => {
       .first();
     const rail = row.getByTestId("message-hover-rail");
     await expect(rail).toHaveCSS("opacity", "1");
+    // Touch keeps the rail visible beside every bubble; it must fit without
+    // scrolling the transcript sideways and pulling messages off the margin.
+    const overflow = await page
+      .getByTestId("transcript")
+      .evaluate((transcript) => transcript.scrollWidth - transcript.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    await captureScreenshot(page, testInfo, "message-rail-touch");
     await expect(rail.getByRole("button", { name: "Reply", exact: true })).toBeHidden();
     await rail.getByRole("button", { name: "React", exact: true }).tap();
     await expect(page.getByRole("button", { name: "🎉", exact: true })).toBeVisible();
