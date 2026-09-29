@@ -15,6 +15,11 @@ describePostgres("PostgresRealtimeFanout (PostgreSQL contract)", () => {
     let cursor = 0;
     let drainError: unknown;
     let draining = Promise.resolve();
+    // Hold reconnects until the missed row is committed, so catch-up cannot outrun it.
+    let releaseReconnect!: () => void;
+    const reconnectAllowed = new Promise<void>((resolve) => {
+      releaseReconnect = resolve;
+    });
 
     await pool.query(`CREATE TABLE ${table} (id bigserial PRIMARY KEY, body text NOT NULL)`);
     const realtime = new PostgresRealtimeFanout({
@@ -24,6 +29,13 @@ describePostgres("PostgresRealtimeFanout (PostgreSQL contract)", () => {
       },
       clientFactory: () => {
         const client = new Client({ connectionString: databaseUrl! });
+        if (listenerClients.length > 0) {
+          const connect = client.connect.bind(client);
+          client.connect = async () => {
+            await reconnectAllowed;
+            return connect();
+          };
+        }
         listenerClients.push(client);
         return client as RealtimeListenerClient;
       },
@@ -63,6 +75,7 @@ describePostgres("PostgresRealtimeFanout (PostgreSQL contract)", () => {
 
       await pool.query("SELECT pg_terminate_backend($1)", [listenerPid]);
       await pool.query(`INSERT INTO ${table} (body) VALUES ($1)`, ["missed-while-disconnected"]);
+      releaseReconnect();
 
       await vi.waitFor(
         () => {
